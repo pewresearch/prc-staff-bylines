@@ -199,6 +199,7 @@ class Content_Type {
 		$loader->add_action( 'pre_get_posts', $this, 'hide_former_staff', 10, 1 );
 		$loader->add_filter( 'the_title', $this, 'indicate_former_staff', 10, 1 );
 		$loader->add_filter( 'post_link', $this, 'modify_staff_permalink', 10, 2 );
+		$loader->add_filter( 'prc_sitemap_supported_taxonomies', $this, 'opt_into_sitemap', 10, 1 );
 	}
 
 	/**
@@ -230,6 +231,19 @@ class Content_Type {
 		\TDS\add_relationship( self::$post_object_name, self::$taxonomy_object_name );
 
 		$this->register_meta_fields( $enabled_post_types );
+	}
+
+	/**
+	 * Opt into sitemap.
+	 *
+	 * @hook prc_sitemap_supported_taxonomies
+	 *
+	 * @param array $taxonomy_types The taxonomy types.
+	 * @return array The taxonomy types.
+	 */
+	public function opt_into_sitemap( $taxonomy_types ) {
+		$taxonomy_types[] = self::$taxonomy_object_name;
+		return $taxonomy_types;
 	}
 
 	/**
