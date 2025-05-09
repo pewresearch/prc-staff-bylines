@@ -1,7 +1,7 @@
 {
-    "name": "@pewresearch/prc-staff-bylines",
+    "name": "@prc/staff-bylines",
     "version": "1.0.0",
-    "description": "Provides a module for PRC Platform that...",
+    "description": "PRC Staff Bylines provides a module for PRC Platform that...",
     "scripts": {
         "build": "bin/build.sh",
         "test": "wp-scripts test-playwright",
