@@ -200,6 +200,7 @@ class Content_Type {
 		$loader->add_filter( 'the_title', $this, 'indicate_former_staff', 10, 1 );
 		$loader->add_filter( 'post_link', $this, 'modify_staff_permalink', 10, 2 );
 		$loader->add_filter( 'prc_sitemap_supported_taxonomies', $this, 'opt_into_sitemap', 10, 1 );
+		$loader->add_filter( 'prc_platform_pub_listing_default_args', $this, 'opt_into_pub_listing', 10, 1 );
 	}
 
 	/**
@@ -536,5 +537,26 @@ class Content_Type {
 			}
 		}
 		return $url;
+	}
+
+	/**
+	 * Opt the post type into the publication listing, but only when there's a search term.
+	 *
+	 * @hook prc_platform_pub_listing_default_args
+	 *
+	 * @param array $args The arguments.
+	 * @return array The arguments.
+	 */
+	public function opt_into_pub_listing( $args = array() ) {
+		// Only include staff post type when there's a search term present.
+		$is_searching = array_key_exists( 's', $args ) && ! empty( $args['s'] );
+		if ( ! $is_searching ) {
+			return $args;
+		}
+
+		$post_types        = $args['post_type'] ?? array();
+		$post_types        = is_array( $post_types ) ? $post_types : array( $post_types );
+		$args['post_type'] = array_merge( $post_types, array( self::$post_object_name ) );
+		return $args;
 	}
 }
