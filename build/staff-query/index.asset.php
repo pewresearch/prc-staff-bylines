@@ -1,0 +1,1 @@
+<?php return array('dependencies' => array('lodash', 'prc-block-utils', 'prc-components', 'prc-icons', 'react', 'react-jsx-runtime', 'wp-api-fetch', 'wp-block-editor', 'wp-blocks', 'wp-components', 'wp-core-data', 'wp-element', 'wp-i18n', 'wp-polyfill', 'wp-url'), 'version' => '1cafe2e9985187a8dcfb');

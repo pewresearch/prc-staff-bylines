@@ -80,7 +80,13 @@ class Plugin {
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-rest-api.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-maelstrom.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-guest-author-commands.php';
-		require_once plugin_dir_path( __DIR__ ) . '/blocks/class-blocks.php';
+
+		$this->load_blocks();
+
+		wp_register_block_metadata_collection(
+			plugin_dir_path( __FILE__ ) . 'build',
+			plugin_dir_path( __FILE__ ) . 'build/blocks-manifest.php'
+		);
 	}
 
 	/**
@@ -90,14 +96,73 @@ class Plugin {
 	 * @access   private
 	 */
 	private function init_dependencies() {
+		// Core.
 		new Content_Type( $this->get_loader() );
 		new SEO( $this->get_loader() );
 		new REST_API( $this->get_loader() );
 		new Maelstrom( $this->get_loader() );
-		new Blocks( $this->get_loader() );
+
+		// Blocks.
+		new Bylines_Query( $this->get_loader() );
+		new Bylines_Display( $this->get_loader() );
+		new Staff_Context_Provider( $this->get_loader() );
+		new Staff_Info( $this->get_loader() );
+		new Staff_Query( $this->get_loader() );
 
 		$this->loader->add_action( 'admin_bar_menu', $this, 'modify_admin_bar_edit_link', 100 );
 		$this->loader->add_action( 'enqueue_block_editor_assets', $this, 'enqueue_editor_assets' );
+	}
+
+	/**
+	 * Get the block JSON.
+	 *
+	 * @param string $block_name The block name.
+	 * @return array
+	 */
+	public static function get_block_json( $block_name ) {
+		$manifest = include PRC_STAFF_BYLINES_DIR . '/build/blocks-manifest.php';
+		if ( ! isset( $manifest[ $block_name ] ) ) {
+			return array();
+		}
+			$manifest = array_key_exists( $block_name, $manifest ) ? $manifest[ $block_name ] : array();
+		if ( ! empty( $manifest ) ) {
+			$manifest['file'] = wp_normalize_path( realpath( PRC_STAFF_BYLINES_DIR . '/build/' . $block_name . '/block.json' ) );
+		}
+		return $manifest;
+	}
+
+	/**
+	 * Include a file from the plugin's includes directory.
+	 *
+	 * @param mixed $block_file_name
+	 * @return WP_Error|void
+	 */
+	private function include_block( $block_file_name ) {
+		$dir             = 'local' === wp_get_environment_type() ? 'src' : 'build';
+		$block_file_path = $dir . '/' . $block_file_name . '/class-' . $block_file_name . '.php';
+		if ( file_exists( plugin_dir_path( __DIR__ ) . $block_file_path ) ) {
+			require_once plugin_dir_path( __DIR__ ) . $block_file_path;
+		} else {
+			do_action( 'qm/debug', 'BLOCK_MISSING: ' . $block_file_path );
+			error_log( 'BLOCK_MISSING: ' . $block_file_path );
+			return new WP_Error( 'prc_staff_bylines_block_missing', __( 'Block missing.', 'prc' ) );
+		}
+	}
+
+	/**
+	 * Include all blocks from the plugin's /blocks directory.
+	 *
+	 * @return void
+	 */
+	private function load_blocks() {
+		$block_files = glob( PRC_STAFF_BYLINES_DIR . '/src/*', GLOB_ONLYDIR );
+		foreach ( $block_files as $block ) {
+			$block  = basename( $block );
+			$loaded = $this->include_block( $block );
+			if ( is_wp_error( $loaded ) ) {
+				error_log( $loaded->get_error_message() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+		}
 	}
 
 	/**

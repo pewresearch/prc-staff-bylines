@@ -11,7 +11,7 @@
  * Plugin Name:       PRC Staff Bylines
  * Plugin URI:        https://github.com/pewresearch/prc-staff-bylines
  * Description:       A comprehensive staff and bylines management system for WordPress that creates synchronized staff profiles and byline taxonomies. Includes editor blocks and UI for managing staff information, providing an enhanced multi-author experience.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Requires at least: 6.7
  * Requires PHP:      8.2
  * Author:            Seth Rubenstein
@@ -34,8 +34,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'PRC_STAFF_BYLINES_FILE', __FILE__ );
 define( 'PRC_STAFF_BYLINES_DIR', __DIR__ );
-define( 'PRC_STAFF_BYLINES_BLOCKS_DIR', __DIR__ . '/blocks' );
-define( 'PRC_STAFF_BYLINES_VERSION', '1.0.0' );
+define( 'PRC_STAFF_BYLINES_VERSION', '1.1.0' );
 
 /**
  * The code that runs during plugin activation.

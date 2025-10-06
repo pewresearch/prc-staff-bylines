@@ -1,23 +1,27 @@
 {
-    "name": "@prc/staff-bylines",
-    "version": "1.0.0",
-    "description": "PRC Staff Bylines provides a module for PRC Platform that...",
-    "scripts": {
-        "build": "bin/build.sh",
-        "test": "wp-scripts test-playwright",
-        "test:env:start": "wp-env start",
-        "test:env:stop": "wp-env stop",
-        "test:env:clean": "wp-env clean all && wp-env start",
-        "test:env:destroy": "wp-env destroy"
-    },
-    "devDependencies": {
-        "@playwright/test": "^1.51.1",
-        "@wordpress/e2e-test-utils-playwright": "^1.22.0",
-        "@wordpress/env": "^10.22.0",
-        "@wordpress/scripts": "^30.15.0"
-    },
-    "dependencies": {
-        "@faker-js/faker": "^9.7.0",
-        "@wordpress/icons": "^10.22.0"
-    }
+	"name": "@prc/staff-bylines",
+	"version": "1.1.0",
+	"description": "A comprehensive staff and bylines management system for WordPress that creates synchronized staff profiles and byline taxonomies. Includes editor blocks and UI for managing staff information, providing an enhanced multi-author experience.",
+	"scripts": {
+		"build": "node ./bin/build.js",
+		"start": "node ./bin/start.js",
+		"watch": "node ./bin/start.js",
+		"test": "wp-scripts test-playwright",
+		"test:env:start": "wp-env start",
+		"test:env:stop": "wp-env stop",
+		"test:env:clean": "wp-env clean all && wp-env start",
+		"test:env:destroy": "wp-env destroy"
+	},
+	"devDependencies": {
+		"@playwright/test": "^1.55.1",
+		"@wordpress/e2e-test-utils-playwright": "^1.32.0",
+		"@wordpress/env": "^10.32.0",
+		"@wordpress/scripts": "^30.25.0"
+	},
+	"dependencies": {
+		"@faker-js/faker": "^9.7.0",
+		"@wordpress/icons": "^10.22.0",
+		"@emotion/styled": "^11.14.0",
+		"react-movable": "^3.0.4"
+	}
 }
