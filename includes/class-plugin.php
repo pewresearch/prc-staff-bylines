@@ -83,6 +83,11 @@ class Plugin {
 
 		$this->load_blocks();
 
+		// Check for blocks-manifest.php file, if it exists, register block metadata.
+		if ( ! file_exists( plugin_dir_path( __FILE__ ) . '/build/blocks-manifest.php' ) ) {
+			do_action( 'qm/warning', 'PRC Staff Bylines blocks-manifest.php file is missing' );
+			return;
+		}
 		wp_register_block_metadata_collection(
 			plugin_dir_path( __FILE__ ) . 'build',
 			plugin_dir_path( __FILE__ ) . 'build/blocks-manifest.php'
@@ -110,7 +115,7 @@ class Plugin {
 		new Staff_Query( $this->get_loader() );
 
 		$this->loader->add_action( 'admin_bar_menu', $this, 'modify_admin_bar_edit_link', 100 );
-		$this->loader->add_action( 'enqueue_block_editor_assets', $this, 'enqueue_editor_assets' );
+		$this->loader->add_action( 'enqueue_block_editor_assets', $this, 'enqueue_editor_assets', 9 );
 	}
 
 	/**

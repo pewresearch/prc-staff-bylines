@@ -74,8 +74,7 @@ return array(
 		'textdomain' => 'bylines-display',
 		'editorScript' => 'file:./index.js',
 		'editorStyle' => 'file:./index.css',
-		'style' => 'file:./style-index.css',
-		'render' => 'file:./render.php'
+		'style' => 'file:./style-index.css'
 	),
 	'bylines-query' => array(
 		'$schema' => 'https://schemas.wp.org/trunk/block.json',
