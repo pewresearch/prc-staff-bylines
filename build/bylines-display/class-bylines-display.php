@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * Bylines Display Block
  *
@@ -16,18 +17,18 @@ class Bylines_Display {
 	/**
 	 * Constructor
 	 *
-	 * @param object $loader The loader.
+	 * @param Loader $loader The loader.
 	 */
-	public function __construct( $loader ) {
+	public function __construct( Loader $loader ) {
 		$this->init( $loader );
 	}
 
 	/**
 	 * Initialize the block
 	 *
-	 * @param object $loader The loader.
+	 * @param Loader|null $loader The loader.
 	 */
-	public function init( $loader = null ) {
+	public function init( ?Loader $loader = null ): void {
 		if ( null !== $loader ) {
 			$loader->add_action( 'init', $this, 'block_init' );
 		}
@@ -41,7 +42,7 @@ class Bylines_Display {
 	 * @param object $block      Block object.
 	 * @return string
 	 */
-	public function render_callback( $attributes, $content, $block ) {
+	public function render_callback( array $attributes, string $content, object $block ): string {
 		if ( isset( $block->context['postId'] ) ) {
 			$object_id = $block->context['postId'];
 		} else {
@@ -84,7 +85,7 @@ class Bylines_Display {
 	 *
 	 * @see https://developer.wordpress.org/reference/functions/register_block_type/
 	 */
-	public function block_init() {
+	public function block_init(): void {
 		register_block_type_from_metadata(
 			PRC_STAFF_BYLINES_DIR . '/build/bylines-display',
 			array(

@@ -5,19 +5,13 @@
  */
 
 /**
- * External Dependencies
- */
-
-/**
  * WordPress Dependencies
  */
-import { __ } from '@wordpress/i18n';
 import { registerBlockType } from '@wordpress/blocks';
 
 /**
  * Internal Dependencies
  */
-
 /**
  * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
  * All files containing `style` keyword are bundled together. The code used
@@ -29,7 +23,6 @@ import { registerBlockType } from '@wordpress/blocks';
 import './style.scss';
 import './editor.scss';
 import edit from './edit';
-import icon from './icon';
 import save from './save';
 
 import metadata from './block.json';
@@ -37,12 +30,6 @@ import metadata from './block.json';
 const { name } = metadata;
 
 const settings = {
-	__experimentalLabel: (attributes) => {
-		const { staffType } = attributes;
-		const staffTypeName = staffType ? staffType.name : 'Staff';
-		return `${staffTypeName} Query`;
-	},
-	icon,
 	edit,
 	save,
 };

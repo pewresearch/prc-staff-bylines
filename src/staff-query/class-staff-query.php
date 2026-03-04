@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * Staff Query Block
  *
@@ -15,7 +16,7 @@ use WP_Error;
  * Block Name:        Staff Query
  * Description:       Query the Staff by Staff Type and Research Area.
  * Requires at least: 6.4
- * Requires PHP:      8.l1
+ * Requires PHP:      8.2
  * Author:            Seth Rubenstein
  *
  * @package           prc-staff-bylines
@@ -24,9 +25,9 @@ class Staff_Query {
 	/**
 	 * Constructor
 	 *
-	 * @param mixed $loader Loader.
+	 * @param Loader $loader Loader.
 	 */
-	public function __construct( $loader ) {
+	public function __construct( Loader $loader ) {
 		$this->init( $loader );
 	}
 
@@ -35,9 +36,9 @@ class Staff_Query {
 	 *
 	 * @hook init
 	 *
-	 * @param mixed $loader Loader.
+	 * @param Loader|null $loader Loader.
 	 */
-	public function init( $loader = null ) {
+	public function init( ?Loader $loader = null ): void {
 		if ( null !== $loader ) {
 			$loader->add_action( 'init', $this, 'block_init' );
 		}
@@ -46,10 +47,10 @@ class Staff_Query {
 	/**
 	 * Get expertise
 	 *
-	 * @param mixed $post_id Post ID.
+	 * @param int $post_id Post ID.
 	 * @return array
 	 */
-	public function get_expertise( $post_id ) {
+	public function get_expertise( int $post_id ): array {
 		$terms     = get_the_terms( $post_id, 'areas-of-expertise' );
 		$expertise = array();
 		if ( $terms ) {
@@ -75,7 +76,7 @@ class Staff_Query {
 	 * @param array $attributes Attributes.
 	 * @return array
 	 */
-	public function query_staff_posts( $attributes = array() ) {
+	public function query_staff_posts( array $attributes = array() ): array {
 		$staff_type    = array_key_exists( 'staffType', $attributes ) ? $attributes['staffType'] : false;
 		$research_area = array_key_exists( 'researchArea', $attributes ) ? $attributes['researchArea'] : false;
 		$tax_query     = array();
@@ -146,7 +147,7 @@ class Staff_Query {
 	 * @param WP_Block $block Block.
 	 * @return string
 	 */
-	public function render_block_callback( $attributes, $content, $block ) {
+	public function render_block_callback( array $attributes, string $content, WP_Block $block ): string {
 		$staff_posts = $this->query_staff_posts( $attributes );
 
 		$block_content = '';
@@ -190,7 +191,7 @@ class Staff_Query {
 	 *
 	 * @see https://developer.wordpress.org/reference/functions/register_block_type/
 	 */
-	public function block_init() {
+	public function block_init(): void {
 		register_block_type_from_metadata(
 			PRC_STAFF_BYLINES_DIR . '/build/staff-query',
 			array(

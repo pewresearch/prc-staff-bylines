@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * CLI command for guest authors.
  *
@@ -34,7 +35,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI && class_exists( 'WPCOM_VIP_CLI_Command' ) ) 
 		 * @subcommand create
 		 * @synopsis --first=<first> --last=<last> [--middle=<middle>] [--dry-run]
 		 */
-		public function create_guest_author( $args, $assoc_args ) {
+		public function create_guest_author( array $args, array $assoc_args ): void {
 			$first_name  = $assoc_args['first'];
 			$middle_name = array_key_exists( 'middle', $assoc_args ) ? ' ' . $assoc_args['middle'] . ' ' : ' '; // If there is no middle name then we want to set it to a space.
 			$last_name   = $assoc_args['last'];

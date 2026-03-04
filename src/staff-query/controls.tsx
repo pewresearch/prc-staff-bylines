@@ -1,4 +1,3 @@
-/* eslint-disable indent */
 /**
  * External Dependencies
  */
@@ -14,13 +13,27 @@ import {
 	__experimentalToolsPanel as ToolsPanel,
 	__experimentalToolsPanelItem as ToolsPanelItem,
 } from '@wordpress/components';
-import { has } from 'lodash';
 
 const PanelDescription = styled.div`
 	grid-column: span 2;
 `;
 
-export default function Controls({ attributes, setAttributes, clientId }) {
+interface TermValue {
+	name?: string;
+	slug?: string;
+	id?: number;
+}
+
+interface ControlsProps {
+	attributes: {
+		staffType?: TermValue;
+		researchArea?: TermValue;
+	};
+	setAttributes: (attrs: Record<string, unknown>) => void;
+	clientId: string;
+}
+
+export default function Controls({ attributes, setAttributes, clientId }: ControlsProps) {
 	const { staffType, researchArea } = attributes;
 	const resetAll = () => {
 		setAttributes({
@@ -52,7 +65,7 @@ export default function Controls({ attributes, setAttributes, clientId }) {
 					<TermSelect
 						maxTerms={1}
 						value={
-							has(staffType, 'name')
+							staffType?.name
 								? [
 										{
 											value: staffType.name,
@@ -62,7 +75,7 @@ export default function Controls({ attributes, setAttributes, clientId }) {
 								: []
 						}
 						taxonomy="staff-type"
-						onChange={(term) => {
+						onChange={(term: TermValue) => {
 							setAttributes({ staffType: term });
 						}}
 					/>
@@ -77,7 +90,7 @@ export default function Controls({ attributes, setAttributes, clientId }) {
 					<TermSelect
 						maxTerms={1}
 						value={
-							has(researchArea, 'name')
+							researchArea?.name
 								? [
 										{
 											value: researchArea.name,
@@ -88,7 +101,7 @@ export default function Controls({ attributes, setAttributes, clientId }) {
 						}
 						taxonomy="research-teams"
 						usePrimaryRestAPI
-						onChange={(term) => {
+						onChange={(term: TermValue) => {
 							setAttributes({ researchArea: term });
 						}}
 					/>

@@ -8,9 +8,14 @@ import { WPEntitySearch } from '@prc/components';
  */
 import { __ } from '@wordpress/i18n';
 import { InspectorControls } from '@wordpress/block-editor';
-import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
+import { PanelBody } from '@wordpress/components';
 
-export default function Controls({ staffId, setAttributes }) {
+interface ControlsProps {
+	staffId: number | null;
+	setAttributes: (attrs: Record<string, unknown>) => void;
+}
+
+export default function Controls({ setAttributes }: ControlsProps) {
 	return (
 		<InspectorControls>
 			<PanelBody title={__('Staff Context Provider')}>
@@ -19,18 +24,13 @@ export default function Controls({ staffId, setAttributes }) {
 					searchLabel="Search for Staff"
 					entityType="postType"
 					entitySubType="staff"
-					onSelect={(entity) => {
-						console.log('Staff: ', entity);
+					onSelect={(entity: any) => {
 						setAttributes({
 							staffSlug: entity.slug,
 						});
 					}}
-					onKeyEnter={() => {
-						console.log('Enter Key Pressed');
-					}}
-					onKeyESC={() => {
-						console.log('ESC Key Pressed');
-					}}
+					onKeyEnter={() => {}}
+					onKeyESC={() => {}}
 					perPage={5}
 					showExcerpt={false}
 				/>

@@ -2,7 +2,6 @@
  * External Dependencies
  */
 import { InnerBlocksAsContextTemplate } from '@prc/components';
-import { getBlockGapSupportValue } from '@prc/block-utils';
 
 /**
  * WordPress Dependencies
@@ -16,30 +15,32 @@ import useBylinesBlockContextProvider from './use-bylines-block-context-provider
 
 const ALLOWED_BLOCKS = ['prc-block/staff-info', 'core/group'];
 
+interface EditProps {
+	attributes: {
+		allowedBlocks?: string[];
+	};
+	setAttributes: (attrs: Partial<EditProps['attributes']>) => void;
+	__unstableLayoutClassNames: string;
+	clientId: string;
+	context: {
+		postId?: number;
+		postType?: string;
+	};
+	isSelected: boolean;
+}
+
 /**
  * The edit function describes the structure of your block in the context of the
  * editor. This represents what the editor will render when the block is used.
  *
  * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-edit-save/#edit
- *
- * @param {Object}   props                            Properties passed to the function.
- * @param {Object}   props.attributes                 Available block attributes.
- * @param            props.__unstableLayoutClassNames
- * @param            props.clientId
- * @param            props.context
- * @param            props.isSelected
- * @param {Function} props.setAttributes              Function that updates individual attributes.
- *
- * @return {WPElement} Element to render.
  */
 export default function Edit({
 	attributes,
-	setAttributes,
 	__unstableLayoutClassNames: layoutClassNames,
 	clientId,
 	context,
-	isSelected,
-}) {
+}: EditProps) {
 	const { allowedBlocks } = attributes;
 	const { postId, postType } = context;
 

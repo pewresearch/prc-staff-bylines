@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * SEO class.
  *
@@ -18,7 +19,7 @@ class SEO {
 	 *
 	 * @param Loader $loader The loader.
 	 */
-	public function __construct( $loader ) {
+	public function __construct( Loader $loader ) {
 		$loader->add_filter( 'wp_robots', $this, 'modify_staff_robots', 10, 1 );
 		$loader->add_filter( 'wpseo_enhanced_slack_data', $this, 'generate_yoast_slack_data', 10, 2 );
 		$loader->add_filter( 'wpseo_meta_author', $this, 'generate_yoast_author_data', 10, 2 );
@@ -32,7 +33,7 @@ class SEO {
 	 * @param array $robots_directives The robots directives.
 	 * @return array The robots directives.
 	 */
-	public function modify_staff_robots( $robots_directives ) {
+	public function modify_staff_robots( array $robots_directives ): array {
 		// Check if the current staff post has byline link enabled, if not then we should add noindex to the robots meta.
 		if ( is_tax( Content_Type::$taxonomy_object_name ) ) {
 			// Check if the current staff post has byline link enabled, if not then we should add noindex to the robots meta.
@@ -54,14 +55,14 @@ class SEO {
 	 * Generate Yoast author data.
 	 *
 	 * @hook wpseo_meta_author
-	 * @param array                  $data         The data.
-	 * @param Indexable_Presentation $presentation The presentation.
+	 * @param mixed $data         The data.
+	 * @param mixed $presentation The presentation.
 	 *
-	 * @return array The data.
+	 * @return mixed The data.
 	 */
-	public function generate_yoast_author_data( $data, $presentation ) {
+	public function generate_yoast_author_data( mixed $data, mixed $presentation ): mixed {
 		$post_id = $presentation->model->object_id;
-		$bylines = new Bylines( $post_id );
+		$bylines = new Bylines( (int) $post_id );
 		if ( is_wp_error( $bylines->bylines ) ) {
 			return $data; // Exit early and with no output if there are no bylines.
 		}
@@ -79,14 +80,14 @@ class SEO {
 	 * Change Enhanced Slack sharing data labels.
 	 *
 	 * @hook wpseo_enhanced_slack_data
-	 * @param array                  $data         The Slack labels + data.
-	 * @param Indexable_Presentation $presentation The indexable presentation object.
+	 * @param array $data         The Slack labels + data.
+	 * @param mixed $presentation The indexable presentation object.
 	 *
 	 * @return array The Slack labels + data.
 	 */
-	public function generate_yoast_slack_data( array $data, $presentation ) {
+	public function generate_yoast_slack_data( array $data, mixed $presentation ): array {
 		$post_id = $presentation->model->object_id;
-		$bylines = new Bylines( $post_id );
+		$bylines = new Bylines( (int) $post_id );
 		if ( is_wp_error( $bylines->bylines ) ) {
 			return $data; // Exit early and with no output if there are no bylines.
 		}

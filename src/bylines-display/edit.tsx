@@ -17,54 +17,63 @@ import apiFetch from '@wordpress/api-fetch';
 
 const DEFAULT_BYLINES = ['Person A', 'Person B', 'Person C'];
 
+interface EditProps {
+	attributes: {
+		prefix: string;
+		className?: string;
+	};
+	setAttributes: (attrs: Partial<EditProps['attributes']>) => void;
+	context: {
+		postId?: number;
+	};
+	clientId: string;
+	isSelected: boolean;
+	__unstableLayoutClassNames: string;
+}
+
 /**
  * The edit function describes the structure of your block in the context of the
  * editor. This represents what the editor will render when the block is used.
  *
  * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-edit-save/#edit
- *
- * @param {Object}   props               Properties passed to the function.
- * @param {Object}   props.attributes    Available block attributes.
- * @param {Function} props.setAttributes Function that updates individual attributes.
- *
- * @return {WPElement} Element to render.
  */
 export default function Edit({
 	attributes,
 	setAttributes,
 	context,
 	clientId,
-	isSelected,
 	__unstableLayoutClassNames: layoutClassNames,
-}) {
+}: EditProps) {
 	const { postId } = context;
 	const { prefix, className } = attributes;
 
-	const [bylines, setBylines] = useState(DEFAULT_BYLINES);
+	const [bylines, setBylines] = useState<string[]>(DEFAULT_BYLINES);
 	const bylineTerms = useSelect(
-		(select) => select('core/editor').getEditedPostAttribute('bylines'),
-		[clientId]
+		(select: any) =>
+			select('core/editor').getEditedPostAttribute('bylines'),
+		[]
 	);
 	const blockProps = useBlockProps({
 		className: classNames(className, layoutClassNames),
 	});
 
-	const getBylineNameAsync = (termId) =>
-		new Promise((resolve) => {
-			apiFetch({
-				path: `/wp/v2/bylines/${termId}`,
-			}).then((byline) => {
-				const { name } = byline;
-				return resolve(name);
-			});
-		});
-
-	const getBylines = () =>
-		Promise.all(bylineTerms.map((termId) => getBylineNameAsync(termId)));
-
 	useEffect(() => {
+		const getBylineNameAsync = (termId: number): Promise<string> =>
+			new Promise((resolve) => {
+				apiFetch({
+					path: `/wp/v2/bylines/${termId}`,
+				}).then((byline: any) => {
+					const { name } = byline;
+					return resolve(name);
+				});
+			});
+
 		if (bylineTerms && 0 < bylineTerms.length) {
-			getBylines().then((data) => {
+			Promise.all(
+				bylineTerms.map((termId: number) =>
+					getBylineNameAsync(termId)
+				)
+			).then((data) => {
 				setBylines([...data]);
 			});
 		} else {
@@ -79,7 +88,7 @@ export default function Edit({
 				placeholder="By"
 				className="prc-block-bylines__prefix"
 				value={prefix}
-				onChange={(value) => setAttributes({ prefix: value })}
+				onChange={(value: string) => setAttributes({ prefix: value })}
 				allowedFormats={[]}
 				style={{
 					marginRight: '4px',
@@ -89,8 +98,8 @@ export default function Edit({
 			{bylines.map((b, index) => {
 				const total = bylines.length;
 				const name = b;
-				let r = '';
-				let Sep = () => {};
+				let r: JSX.Element;
+				let Sep = (): JSX.Element | null => null;
 				if (1 < total && index + 1 === total) {
 					Sep = () => (
 						<span className="prc-platform-staff-bylines__separator">
@@ -106,7 +115,7 @@ export default function Edit({
 					);
 				}
 				if (index === 0 && !postId) {
-					r = <a>{name}</a>;
+					r = <span role="link">{name}</span>;
 				} else {
 					r = (
 						<Fragment>

@@ -1,6 +1,7 @@
 <?php
+declare(strict_types=1);
 /**
- * Plugin class.
+ * Bootstrap class.
  *
  * @package    PRC\Platform\Staff_Bylines
  */
@@ -10,11 +11,11 @@ namespace PRC\Platform\Staff_Bylines;
 use WP_Error;
 
 /**
- * Plugin class.
+ * Bootstrap class.
  *
  * @package    PRC\Platform\Staff_Bylines
  */
-class Plugin {
+class Bootstrap {
 	/**
 	 * The loader that's responsible for maintaining and registering all hooks that power
 	 * the plugin.
@@ -23,7 +24,7 @@ class Plugin {
 	 * @access   protected
 	 * @var      Loader    $loader    Maintains and registers all hooks for the plugin.
 	 */
-	protected $loader;
+	protected Loader $loader;
 
 	/**
 	 * The unique identifier of this plugin.
@@ -32,7 +33,7 @@ class Plugin {
 	 * @access   protected
 	 * @var      string    $plugin_name    The string used to uniquely identify this plugin.
 	 */
-	protected $plugin_name;
+	protected string $plugin_name;
 
 	/**
 	 * The current version of the plugin.
@@ -41,7 +42,7 @@ class Plugin {
 	 * @access   protected
 	 * @var      string    $version    The current version of the plugin.
 	 */
-	protected $version;
+	protected string $version;
 
 	/**
 	 * Define the core functionality of the platform as initialized by hooks.
@@ -49,7 +50,7 @@ class Plugin {
 	 * @since    1.0.0
 	 */
 	public function __construct() {
-		$this->version     = '1.0.0';
+		$this->version     = PRC_STAFF_BYLINES_VERSION;
 		$this->plugin_name = 'prc-staff-bylines';
 
 		$this->load_dependencies();
@@ -66,7 +67,7 @@ class Plugin {
 	 * @since    1.0.0
 	 * @access   private
 	 */
-	private function load_dependencies() {
+	private function load_dependencies(): void {
 		// Load plugin loading class.
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-loader.php';
 
@@ -84,13 +85,13 @@ class Plugin {
 		$this->load_blocks();
 
 		// Check for blocks-manifest.php file, if it exists, register block metadata.
-		if ( ! file_exists( plugin_dir_path( __FILE__ ) . '/build/blocks-manifest.php' ) ) {
+		if ( ! file_exists( PRC_STAFF_BYLINES_DIR . '/build/blocks-manifest.php' ) ) {
 			do_action( 'qm/warning', 'PRC Staff Bylines blocks-manifest.php file is missing' );
 			return;
 		}
 		wp_register_block_metadata_collection(
-			plugin_dir_path( __FILE__ ) . 'build',
-			plugin_dir_path( __FILE__ ) . 'build/blocks-manifest.php'
+			PRC_STAFF_BYLINES_DIR . '/build',
+			PRC_STAFF_BYLINES_DIR . '/build/blocks-manifest.php'
 		);
 	}
 
@@ -100,7 +101,7 @@ class Plugin {
 	 * @since    1.0.0
 	 * @access   private
 	 */
-	private function init_dependencies() {
+	private function init_dependencies(): void {
 		// Core.
 		new Content_Type( $this->get_loader() );
 		new SEO( $this->get_loader() );
@@ -116,6 +117,28 @@ class Plugin {
 
 		$this->loader->add_action( 'admin_bar_menu', $this, 'modify_admin_bar_edit_link', 100 );
 		$this->loader->add_action( 'enqueue_block_editor_assets', $this, 'enqueue_editor_assets', 9 );
+
+		// Disable WordPress author archives - bylines taxonomy handles author pages instead.
+		$this->loader->add_action( 'template_redirect', $this, 'disable_author_archives' );
+	}
+
+	/**
+	 * Disable WordPress author archives.
+	 *
+	 * PRC uses the bylines taxonomy for author pages instead of WordPress's
+	 * built-in author archives. This prevents duplicate content and ensures
+	 * all author traffic goes through the bylines system.
+	 *
+	 * @hook template_redirect
+	 * @return void
+	 */
+	public function disable_author_archives(): void {
+		if ( is_author() ) {
+			global $wp_query;
+			$wp_query->set_404();
+			status_header( 404 );
+			nocache_headers();
+		}
 	}
 
 	/**
@@ -124,25 +147,25 @@ class Plugin {
 	 * @param string $block_name The block name.
 	 * @return array
 	 */
-	public static function get_block_json( $block_name ) {
+	public static function get_block_json( string $block_name ): array {
 		$manifest = include PRC_STAFF_BYLINES_DIR . '/build/blocks-manifest.php';
 		if ( ! isset( $manifest[ $block_name ] ) ) {
 			return array();
 		}
-			$manifest = array_key_exists( $block_name, $manifest ) ? $manifest[ $block_name ] : array();
-		if ( ! empty( $manifest ) ) {
-			$manifest['file'] = wp_normalize_path( realpath( PRC_STAFF_BYLINES_DIR . '/build/' . $block_name . '/block.json' ) );
-		}
-		return $manifest;
+		$block_manifest         = $manifest[ $block_name ];
+		$block_manifest['file'] = wp_normalize_path(
+			realpath( PRC_STAFF_BYLINES_DIR . '/build/' . $block_name . '/block.json' )
+		);
+		return $block_manifest;
 	}
 
 	/**
 	 * Include a file from the plugin's includes directory.
 	 *
-	 * @param mixed $block_file_name
-	 * @return WP_Error|void
+	 * @param string $block_file_name The block file name.
+	 * @return WP_Error|null
 	 */
-	private function include_block( $block_file_name ) {
+	private function include_block( string $block_file_name ): WP_Error|null {
 		$dir             = 'local' === wp_get_environment_type() ? 'src' : 'build';
 		$block_file_path = $dir . '/' . $block_file_name . '/class-' . $block_file_name . '.php';
 		if ( file_exists( plugin_dir_path( __DIR__ ) . $block_file_path ) ) {
@@ -150,8 +173,9 @@ class Plugin {
 		} else {
 			do_action( 'qm/debug', 'BLOCK_MISSING: ' . $block_file_path );
 			error_log( 'BLOCK_MISSING: ' . $block_file_path );
-			return new WP_Error( 'prc_staff_bylines_block_missing', __( 'Block missing.', 'prc' ) );
+			return new WP_Error( 'prc_staff_bylines_block_missing', __( 'Block missing.', 'prc-staff-bylines' ) );
 		}
+		return null;
 	}
 
 	/**
@@ -159,7 +183,7 @@ class Plugin {
 	 *
 	 * @return void
 	 */
-	private function load_blocks() {
+	private function load_blocks(): void {
 		$block_files = glob( PRC_STAFF_BYLINES_DIR . '/src/*', GLOB_ONLYDIR );
 		foreach ( $block_files as $block ) {
 			$block  = basename( $block );
@@ -178,7 +202,7 @@ class Plugin {
 	 * @param mixed $admin_bar The admin bar.
 	 * @return void
 	 */
-	public function modify_admin_bar_edit_link( $admin_bar ) {
+	public function modify_admin_bar_edit_link( $admin_bar ): void {
 		if ( ! is_tax( Content_Type::$taxonomy_object_name ) ) {
 			return;
 		}
@@ -211,10 +235,10 @@ class Plugin {
 	 * @param string $folder_name The folder name.
 	 * @return bool|WP_Error True if the asset is registered, WP_Error if it fails.
 	 */
-	public function register_editor_asset( $folder_name ) {
-		$asset_file = include plugin_dir_path( __FILE__ ) . $folder_name . '/build/index.asset.php';
+	public function register_editor_asset( string $folder_name ): bool|WP_Error {
+		$asset_file = include PRC_STAFF_BYLINES_DIR . '/includes/' . $folder_name . '/build/index.asset.php';
 		$asset_slug = $this->plugin_name . '-' . $folder_name;
-		$script_src = plugin_dir_url( __FILE__ ) . $folder_name . '/build/index.js';
+		$script_src = plugins_url( 'includes/' . $folder_name . '/build/index.js', PRC_STAFF_BYLINES_FILE );
 
 		$script = wp_register_script(
 			$asset_slug,
@@ -234,11 +258,11 @@ class Plugin {
 	/**
 	 * Enqueue the editor asset
 	 *
-	 * @param string $folder_name The folder name.
-	 * @param string $post_type The post type.
+	 * @param string      $folder_name The folder name.
+	 * @param string|bool $post_type The post type.
 	 * @return void
 	 */
-	public function enqueue_editor_asset( $folder_name, $post_type = false ) {
+	public function enqueue_editor_asset( string $folder_name, string|bool $post_type = false ): void {
 		$this->register_editor_asset( $folder_name );
 		$enabled_post_types = false !== $post_type ? array( $post_type ) : Content_Type::get_enabled_post_types();
 		$registered         = wp_script_is( $this->plugin_name . '-' . $folder_name, 'registered' );
@@ -251,8 +275,9 @@ class Plugin {
 	 * Enqueue the editor assets
 	 *
 	 * @hook enqueue_block_editor_assets
+	 * @return void
 	 */
-	public function enqueue_editor_assets() {
+	public function enqueue_editor_assets(): void {
 		$this->enqueue_editor_asset( 'bylines-inspector-sidebar-panel' );
 		$this->enqueue_editor_asset( 'staff-inspector-sidebar-panel', 'staff' );
 	}
@@ -262,7 +287,7 @@ class Plugin {
 	 *
 	 * @since    1.0.0
 	 */
-	public function run() {
+	public function run(): void {
 		$this->loader->run();
 	}
 
@@ -273,7 +298,7 @@ class Plugin {
 	 * @since     1.0.0
 	 * @return    string    The name of the plugin.
 	 */
-	public function get_plugin_name() {
+	public function get_plugin_name(): string {
 		return $this->plugin_name;
 	}
 
@@ -281,9 +306,9 @@ class Plugin {
 	 * The reference to the class that orchestrates the hooks with the plugin.
 	 *
 	 * @since     1.0.0
-	 * @return    PRC\Platform\Staff_Bylines\Loader
+	 * @return    Loader
 	 */
-	public function get_loader() {
+	public function get_loader(): Loader {
 		return $this->loader;
 	}
 
@@ -293,7 +318,7 @@ class Plugin {
 	 * @since     1.0.0
 	 * @return    string    The version number of the plugin.
 	 */
-	public function get_version() {
+	public function get_version(): string {
 		return $this->version;
 	}
 }

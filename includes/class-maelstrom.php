@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * Maelstrom class.
  *
@@ -16,7 +17,7 @@ class Maelstrom {
 	 *
 	 * @param Loader $loader The loader.
 	 */
-	public function __construct( $loader ) {
+	public function __construct( Loader $loader ) {
 		$loader->add_action( 'prc_platform_on_publish', $this, 'enforce', 10, 1 );
 	}
 
@@ -25,12 +26,12 @@ class Maelstrom {
 	 *
 	 * @param int   $byline_term_id The byline term ID.
 	 * @param array $regions_countries The regions and countries.
-	 * @return bool
+	 * @return array
 	 */
-	private function is_byline_protected( $byline_term_id, $regions_countries = array() ) {
+	private function is_byline_protected( int $byline_term_id, array $regions_countries = array() ): array {
 		$staff_post_id = get_term_meta( $byline_term_id, 'tds_post_id', true );
 		if ( empty( $staff_post_id ) || false === $staff_post_id ) {
-			return false;
+			return array( 'enabled' => false );
 		}
 		$maelstrom = get_post_meta( $staff_post_id, '_maelstrom', true );
 		if ( ! $maelstrom || ! is_array( $maelstrom ) ) {
@@ -56,9 +57,10 @@ class Maelstrom {
 	 * Enforce the Maelstrom protection.
 	 *
 	 * @hook prc_platform_on_publish
-	 * @param WP_Post $post The post.
+	 * @param \WP_Post $post The post.
+	 * @return void
 	 */
-	public function enforce( $post ) {
+	public function enforce( $post ): void {
 		// Does this post have any bylines?
 		$bylines = get_post_meta( $post->ID, 'bylines', true );
 		if ( ! is_array( $bylines ) ) {

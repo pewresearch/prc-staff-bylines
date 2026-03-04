@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * Staff class.
  *
@@ -19,114 +20,114 @@ class Staff {
 	/**
 	 * The ID of the staff member.
 	 *
-	 * @var int
+	 * @var int|string
 	 */
-	public $ID;
+	public int|string $ID;
 
 	/**
 	 * The name of the staff member.
 	 *
 	 * @var string
 	 */
-	public $name;
+	public string $name;
 
 	/**
 	 * The slug of the staff member.
 	 *
 	 * @var string
 	 */
-	public $slug;
+	public string $slug;
 
 	/**
 	 * The link of the staff member.
 	 *
-	 * @var string
+	 * @var string|false
 	 */
-	public $link;
+	public string|false $link;
 
 	/**
 	 * The user ID of the staff member.
 	 *
-	 * @var int
+	 * @var int|string|false
 	 */
-	public $user_id;
+	public int|string|false $user_id;
 
 	/**
 	 * The bio of the staff member.
 	 *
 	 * @var string
 	 */
-	public $bio;
+	public string $bio;
 
 	/**
 	 * The mini bio of the staff member.
 	 *
 	 * @var string
 	 */
-	public $mini_bio;
+	public string $mini_bio;
 
 	/**
 	 * The job title of the staff member.
 	 *
-	 * @var string
+	 * @var string|false
 	 */
-	public $job_title;
+	public string|false $job_title;
 
 	/**
 	 * The extended job title of the staff member.
 	 *
-	 * @var string
+	 * @var string|false
 	 */
-	public $job_title_extended;
+	public string|false $job_title_extended;
 
 	/**
 	 * The photo of the staff member.
 	 *
-	 * @var string
+	 * @var array|false
 	 */
-	public $photo;
+	public array|false $photo;
 
 	/**
 	 * The expertise of the staff member.
 	 *
-	 * @var array
+	 * @var array|false
 	 */
-	public $expertise;
+	public array|false $expertise;
 
 	/**
 	 * The social profiles of the staff member.
 	 *
-	 * @var array
+	 * @var array|false
 	 */
-	public $social_profiles;
+	public array|false $social_profiles;
 
 	/**
 	 * The WordPress user of the staff member.
 	 *
-	 * @var WP_User
+	 * @var \WP_User|false
 	 */
-	public $wp_user;
+	public \WP_User|false $wp_user;
 
 	/**
 	 * The slack handle of the staff member.
 	 *
-	 * @var string
+	 * @var string|false
 	 */
-	public $slack_handle;
+	public string|false $slack_handle;
 
 	/**
 	 * Whether the staff member is currently employed.
 	 *
 	 * @var bool
 	 */
-	public $is_currently_employed = false;
+	public bool $is_currently_employed = false;
 
 	/**
 	 * The cache TTL.
 	 *
 	 * @var int
 	 */
-	protected static $cache_ttl = 1 * HOUR_IN_SECONDS;
+	protected static int $cache_ttl = 1 * HOUR_IN_SECONDS;
 
 	/**
 	 * Constructor.
@@ -134,7 +135,7 @@ class Staff {
 	 * @param int|false $post_id The post ID.
 	 * @param int|false $term_id The term ID.
 	 */
-	public function __construct( $post_id = false, $term_id = false ) {
+	public function __construct( int|false $post_id = false, int|false $term_id = false ) {
 		// if post id is not false then we'll check the staff post, if term id is not false then well check the term and get the staff post id from there and then continue...
 		if ( false === $post_id && false !== $term_id && is_int( $term_id ) ) {
 			$post_id = $this->get_staff_post_id_from_term_id( $term_id );
@@ -162,12 +163,12 @@ class Staff {
 	 * @param int $term_id The term ID.
 	 * @return int|WP_Error The staff post ID.
 	 */
-	public function get_staff_post_id_from_term_id( $term_id ) {
+	public function get_staff_post_id_from_term_id( int $term_id ): int|WP_Error {
 		$staff_post_id = get_term_meta( $term_id, 'tds_post_id', true );
 		if ( empty( $staff_post_id ) || false === $staff_post_id ) {
 			return new WP_Error( '404', 'Staff post not found, no post id found for term id.' );
 		}
-		return $staff_post_id;
+		return (int) $staff_post_id;
 	}
 
 	/**
@@ -176,7 +177,7 @@ class Staff {
 	 * @param int|false $staff_post_id The staff post ID.
 	 * @return string|false The staff link.
 	 */
-	public function get_staff_link( $staff_post_id = false ) {
+	public function get_staff_link( int|false $staff_post_id = false ): string|false {
 		if ( false === $staff_post_id ) {
 			$staff_post_id = $this->ID;
 		}
@@ -191,9 +192,12 @@ class Staff {
 
 		$term = TDS\get_related_term( $staff_post_id );
 		if ( ! is_a( $term, 'WP_Term' ) ) {
-			return new WP_Error( '404', 'Byline term not found, no matching term found for staff post.' );
+			return false;
 		}
 		$link = get_term_link( $term, 'bylines' );
+		if ( is_wp_error( $link ) ) {
+			return false;
+		}
 		return $link;
 	}
 
@@ -203,7 +207,7 @@ class Staff {
 	 * @param int $post_id The post ID.
 	 * @return bool True if the cache is set, false otherwise.
 	 */
-	public function get_cache( $post_id ) {
+	public function get_cache( int $post_id ): bool {
 		$cache = wp_cache_get( $post_id, 'staff_data' );
 		if ( false !== $cache && ! is_user_logged_in() ) {
 			foreach ( $cache as $key => $value ) {
@@ -217,7 +221,7 @@ class Staff {
 	/**
 	 * Set the cache.
 	 */
-	public function set_cache() {
+	public function set_cache(): void {
 		if ( ! is_preview() ) {
 			wp_cache_set(
 				$this->ID,
@@ -233,13 +237,13 @@ class Staff {
 	 *
 	 * @param int $post_id The post ID.
 	 */
-	public function set_staff( $post_id ) {
+	public function set_staff( int $post_id ): void {
 		if ( true === $this->get_cache( $post_id ) ) {
 			return;
 		}
 		$staff_post = get_post( $post_id );
 		if ( 'staff' !== $staff_post->post_type ) {
-			return new WP_Error( '404', 'This is not a staff post' );
+			return;
 		}
 
 		$staff_post_id = $staff_post->ID;
@@ -272,7 +276,7 @@ class Staff {
 	 *
 	 * @param int $term_id The term ID.
 	 */
-	public function set_guest( $term_id ) {
+	public function set_guest( int $term_id ): void {
 		$this->ID                    = 'guest_' . $term_id;
 		$is_guest_author             = get_post_meta( $term_id, 'is_guest_author', true );
 		$term                        = get_term( $term_id );
@@ -281,7 +285,7 @@ class Staff {
 		$this->slug                  = $term->slug;
 		$this->link                  = $is_guest_author ? get_term_link( $term_id, 'bylines' ) : false;
 		$this->user_id               = false;
-		$this->is_currently_employed = $is_guest_author;
+		$this->is_currently_employed = (bool) $is_guest_author;
 		$this->bio                   = '';
 		$this->job_title             = $is_guest_author ? 'Guest Author' : 'Guest Contributor';
 		$this->job_title_extended    = '';
@@ -300,7 +304,7 @@ class Staff {
 	 * @param int|false $staff_post_id The staff post ID.
 	 * @return bool True if the staff member is currently employed, false otherwise.
 	 */
-	public function check_employment_status( $staff_post_id = false ) {
+	public function check_employment_status( int|false $staff_post_id = false ): bool {
 		if ( false === $staff_post_id ) {
 			$staff_post_id = $this->ID;
 		}
@@ -320,7 +324,7 @@ class Staff {
 	 * @param int|false $staff_post_id The staff post ID.
 	 * @return string|false The job title.
 	 */
-	public function get_job_title( $staff_post_id = false ) {
+	public function get_job_title( int|false $staff_post_id = false ): string|false {
 		if ( false === $staff_post_id ) {
 			$staff_post_id = $this->ID;
 		}
@@ -340,7 +344,7 @@ class Staff {
 	 * @param int|false $staff_post_id The staff post ID.
 	 * @return string|false The extended job title.
 	 */
-	public function get_job_title_extended( $staff_post_id = false ) {
+	public function get_job_title_extended( int|false $staff_post_id = false ): string|false {
 		if ( false === $staff_post_id ) {
 			$staff_post_id = $this->ID;
 		}
@@ -349,7 +353,7 @@ class Staff {
 		}
 		$job_title_extended = get_post_meta( $staff_post_id, 'jobTitleExtended', true );
 		if ( false === $this->is_currently_employed ) {
-			$job_title_extended = preg_replace( '/(a|an) /', 'a former ', $job_title_extended );
+			$job_title_extended = preg_replace( '/\b(a|an) /', 'a former ', $job_title_extended );
 		}
 		return $job_title_extended;
 	}
@@ -360,7 +364,7 @@ class Staff {
 	 * @param int|false $staff_post_id The staff post ID.
 	 * @return array|false The expertise terms.
 	 */
-	public function get_expertise( $staff_post_id = false ) {
+	public function get_expertise( int|false $staff_post_id = false ): array|false {
 		if ( false === $staff_post_id ) {
 			$staff_post_id = $this->ID;
 		}
@@ -393,7 +397,7 @@ class Staff {
 	 * @param int|false $staff_post_id The staff post ID.
 	 * @return array|false The staff photo.
 	 */
-	public function get_staff_photo( $staff_post_id = false ) {
+	public function get_staff_photo( int|false $staff_post_id = false ): array|false {
 		$staff_photo_data = false;
 		$staff_photo_id   = get_post_thumbnail_id( $staff_post_id );
 		$staff_photo      = wp_get_attachment_image_src( $staff_photo_id, 'full' );
@@ -416,7 +420,7 @@ class Staff {
 	 * @param int|false $staff_post_id The staff post ID.
 	 * @return array|false The social profiles.
 	 */
-	public function get_social_profiles( $staff_post_id = false ) {
+	public function get_social_profiles( int|false $staff_post_id = false ): array|false {
 		if ( false === $staff_post_id ) {
 			$staff_post_id = $this->ID;
 		}
@@ -430,9 +434,9 @@ class Staff {
 	 * Returns the WordPress user for the staff member.
 	 *
 	 * @param int|false $staff_post_id The staff post ID.
-	 * @return WP_User|false The WordPress user.
+	 * @return \WP_User|false The WordPress user.
 	 */
-	public function get_wp_user( $staff_post_id = false ) {
+	public function get_wp_user( int|false $staff_post_id = false ): \WP_User|false {
 		if ( false === $staff_post_id ) {
 			$staff_post_id = $this->ID;
 		}
@@ -456,7 +460,7 @@ class Staff {
 	 * @param int|false $staff_post_id The staff post ID.
 	 * @return string|false The Slack handle.
 	 */
-	public function get_slack_handle( $staff_post_id = false ) {
+	public function get_slack_handle( int|false $staff_post_id = false ): string|false {
 		if ( false === $staff_post_id ) {
 			$staff_post_id = $this->ID;
 		}

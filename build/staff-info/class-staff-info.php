@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * Staff Info Block
  *
@@ -12,7 +13,7 @@ namespace PRC\Platform\Staff_Bylines;
  * Description:       Display staff info from a byline; supports name, job title, twitter, and expertise.
  * Version:           0.1.0
  * Requires at least: 6.1
- * Requires PHP:      8.1
+ * Requires PHP:      8.2
  * Author:            Seth Rubenstein
  *
  * @package           prc-staff-bylines
@@ -23,38 +24,38 @@ class Staff_Info {
 	 *
 	 * @var array
 	 */
-	public $block_json;
+	public array $block_json;
 
 	/**
 	 * Editor script handle
 	 *
 	 * @var string
 	 */
-	public $editor_script_handle;
+	public string $editor_script_handle;
 
 	/**
 	 * Block bound staff
 	 *
-	 * @var bool
+	 * @var array|false
 	 */
-	public $block_bound_staff = false;
+	public array|false $block_bound_staff = false;
 
 	/**
 	 * Constructor
 	 *
-	 * @param mixed $loader Loader.
+	 * @param Loader $loader Loader.
 	 */
-	public function __construct( $loader ) {
-		$this->block_json = Plugin::get_block_json( 'staff-info' );
+	public function __construct( Loader $loader ) {
+		$this->block_json = Bootstrap::get_block_json( 'staff-info' );
 		$this->init( $loader );
 	}
 
 	/**
 	 * Initialize the block
 	 *
-	 * @param mixed $loader Loader.
+	 * @param Loader|null $loader Loader.
 	 */
-	public function init( $loader = null ) {
+	public function init( ?Loader $loader = null ): void {
 		if ( null !== $loader ) {
 			$loader->add_action( 'init', $this, 'block_init' );
 			$loader->add_action( 'init', $this, 'register_assets' );
@@ -68,7 +69,7 @@ class Staff_Info {
 	 * @hook init
 	 * @return void
 	 */
-	public function register_assets() {
+	public function register_assets(): void {
 		$this->editor_script_handle = register_block_script_handle( $this->block_json, 'editorScript' );
 	}
 
@@ -78,7 +79,7 @@ class Staff_Info {
 	 * @hook enqueue_block_editor_assets
 	 * @return void
 	 */
-	public function register_editor_script() {
+	public function register_editor_script(): void {
 		wp_enqueue_script( $this->editor_script_handle );
 	}
 
@@ -90,7 +91,7 @@ class Staff_Info {
 	 * @param mixed $attribute_name Attribute name.
 	 * @return mixed
 	 */
-	public function get_staff_info_for_block_binding( $source_args, $block, $attribute_name ) {
+	public function get_staff_info_for_block_binding( mixed $source_args, mixed $block, mixed $attribute_name ): mixed {
 		$block_context = $block->context;
 		$staff_post_id = array_key_exists( 'staffId', $block_context ) ? $block_context['staffId'] : false;
 		if ( false === $staff_post_id ) {
@@ -229,11 +230,11 @@ class Staff_Info {
 	 * @hook init
 	 * @see https://developer.wordpress.org/reference/functions/register_block_type/
 	 */
-	public function block_init() {
+	public function block_init(): void {
 		register_block_bindings_source(
 			'prc-platform/staff-info',
 			array(
-				'label'              => __( 'Staff Info API', 'prc-platform/staff-info' ),
+				'label'              => __( 'Staff Info API', 'prc-staff-bylines' ),
 				'get_value_callback' => array( $this, 'get_staff_info_for_block_binding' ),
 				'uses_context'       => array( 'staffId' ),
 			)

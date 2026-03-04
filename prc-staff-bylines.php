@@ -9,18 +9,20 @@
  *
  * @wordpress-plugin
  * Plugin Name:       PRC Staff Bylines
- * Plugin URI:        https://github.com/pewresearch/prc-staff-bylines
+ * Plugin URI:        https://github.com/pewresearch/prc-platform/tree/trunk/plugins/prc-staff-bylines
  * Description:       A comprehensive staff and bylines management system for WordPress that creates synchronized staff profiles and byline taxonomies. Includes editor blocks and UI for managing staff information, providing an enhanced multi-author experience.
  * Version:           1.1.0
- * Requires at least: 6.7
+ * Requires at least: 6.8
  * Requires PHP:      8.2
  * Author:            Seth Rubenstein
  * Author URI:        https://pewresearch.org
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
- * Text Domain:       prc-xxx
+ * Text Domain:       prc-staff-bylines
  * Requires Plugins:  prc-platform-core
  */
+
+declare(strict_types=1);
 
 namespace PRC\Platform\Staff_Bylines;
 
@@ -40,7 +42,7 @@ define( 'PRC_STAFF_BYLINES_VERSION', '1.1.0' );
  * The code that runs during plugin activation.
  * This action is documented in includes/class-plugin-activator.php
  */
-function activate() {
+function activate(): void {
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-plugin-activator.php';
 	Plugin_Activator::activate();
 }
@@ -49,7 +51,7 @@ function activate() {
  * The code that runs during plugin deactivation.
  * This action is documented in includes/class-plugin-deactivator.php
  */
-function deactivate() {
+function deactivate(): void {
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-plugin-deactivator.php';
 	Plugin_Deactivator::deactivate();
 }
@@ -63,9 +65,9 @@ register_deactivation_hook( __FILE__, '\PRC\Platform\Staff_Bylines\deactivate' )
 require plugin_dir_path( __FILE__ ) . 'includes/utils.php';
 
 /**
- * The core plugin class that is used to define the hooks that initialize the various components.
+ * The core bootstrap class that is used to define the hooks that initialize the various components.
  */
-require plugin_dir_path( __FILE__ ) . 'includes/class-plugin.php';
+require plugin_dir_path( __FILE__ ) . 'includes/class-bootstrap.php';
 
 /**
  * Begins execution of the plugin.
@@ -76,8 +78,8 @@ require plugin_dir_path( __FILE__ ) . 'includes/class-plugin.php';
  *
  * @since    1.0.0
  */
-function run_prc_staff_bylines() {
-	$plugin = new Plugin();
+function run_prc_staff_bylines(): void {
+	$plugin = new Bootstrap();
 	$plugin->run();
 }
 run_prc_staff_bylines();

@@ -5,13 +5,8 @@
  */
 
 /**
- * External Dependencies
- */
-
-/**
  * WordPress Dependencies
  */
-import { __ } from '@wordpress/i18n';
 import { registerBlockType } from '@wordpress/blocks';
 
 /**
@@ -29,14 +24,23 @@ import { registerBlockType } from '@wordpress/blocks';
 import './style.scss';
 import './editor.scss';
 import edit from './edit';
-import save from './save';
 import icon from './icon';
+import save from './save';
 
 import metadata from './block.json';
 
 const { name } = metadata;
 
+interface StaffType {
+	name?: string;
+}
+
 const settings = {
+	__experimentalLabel: (attributes: { staffType?: StaffType }) => {
+		const { staffType } = attributes;
+		const staffTypeName = staffType ? staffType.name : 'Staff';
+		return `${staffTypeName} Query`;
+	},
 	icon,
 	edit,
 	save,

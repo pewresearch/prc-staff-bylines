@@ -1,15 +1,24 @@
 /**
- * External Dependencies
- */
-
-/**
  * WordPress Dependencies
  */
 import { useMemo, useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import { useEntityProp } from '@wordpress/core-data';
 
-const placeholderBylines = [
+interface StaffInfo {
+	staffName: string;
+	staffJobTitle: string;
+	staffImage: false | Record<string, unknown>;
+	staffTwitter: string | null;
+	staffExpertise: Array<Record<string, unknown>>;
+	staffBio: string;
+	staffMiniBio: string;
+	staffLink: string | false;
+	staffJobTitleExtended: string;
+	staffBioShort: string;
+}
+
+const placeholderBylines: StaffInfo[] = [
 	{
 		staffName: 'John Doe',
 		staffJobTitle: 'Associate Researcher',
@@ -42,24 +51,23 @@ const placeholderBylines = [
 	},
 ];
 
-const getBylineNameAsync = (termId) =>
+const getBylineNameAsync = (termId: number): Promise<StaffInfo> =>
 	new Promise((resolve, reject) => {
 		apiFetch({
 			path: `/wp/v2/bylines/${termId}`,
 		})
-			.then((byline) => {
+			.then((byline: any) => {
 				const { staffInfo } = byline;
-				console.log('getBylineNameAsync', byline);
 				return resolve(staffInfo);
 			})
-			.catch((err) => {
-				console.error(err);
+			.catch((err: Error) => {
 				return reject(err);
 			});
 	});
 
-async function getBlockBylineContexts(bylineTermIds) {
-	console.log('getBlockBylineContexts', bylineTermIds);
+async function getBlockBylineContexts(
+	bylineTermIds: number[] | undefined
+): Promise<StaffInfo[]> {
 	if (!bylineTermIds) {
 		return placeholderBylines;
 	}
@@ -68,25 +76,41 @@ async function getBlockBylineContexts(bylineTermIds) {
 	);
 }
 
+interface UseBylinesContextProviderProps {
+	postId?: number;
+	postType?: string;
+}
+
+interface UseBylinesContextProviderReturn {
+	isResolving: boolean;
+	bylinesContext: StaffInfo[];
+}
+
 /**
  * Returns an object containing the bylines context and a contextId.
  * The bylines context is an array of staffInfo objects matching each bylineTermId passed in.
  * The contextId is a hash of the first staffInfo object in the bylines context array.
- * @param {*} bylineTermIds
- * @return
  */
-export default function useBylinesContextProvider({ postId, postType }) {
-	const [bylineTermIds] = useEntityProp('postType', postType, 'bylines');
-	const [bylinesContext, _setBylines] = useState([]);
+export default function useBylinesContextProvider({
+	postType,
+}: UseBylinesContextProviderProps): UseBylinesContextProviderReturn {
+	const [bylineTermIds] = useEntityProp(
+		'postType',
+		postType ?? 'post',
+		'bylines'
+	);
+	const [bylinesContext, _setBylines] = useState<StaffInfo[]>([]);
 	const isResolving = useMemo(
 		() => null === bylinesContext,
 		[bylinesContext]
 	);
 
 	useEffect(() => {
-		getBlockBylineContexts(bylineTermIds).then((bylines) => {
-			_setBylines(bylines);
-		});
+		getBlockBylineContexts(bylineTermIds as number[] | undefined).then(
+			(bylines) => {
+				_setBylines(bylines);
+			}
+		);
 	}, [bylineTermIds]);
 
 	return {

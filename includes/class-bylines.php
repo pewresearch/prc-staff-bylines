@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * Bylines class.
  *
@@ -20,36 +21,32 @@ class Bylines {
 	 *
 	 * @var int
 	 */
-	public $post_id;
+	public int $post_id;
 
 	/**
 	 * The bylines.
 	 *
-	 * @var array
+	 * @var array|WP_Error
 	 */
-	public $bylines;
+	public array|WP_Error $bylines;
 
 	/**
 	 * Whether the bylines should be displayed.
 	 *
 	 * @var bool
 	 */
-	public $should_display = false;
+	public bool $should_display = false;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param int $post_id The post ID.
 	 */
-	public function __construct( $post_id ) {
-		if ( ! is_int( $post_id ) ) {
-			$this->bylines = new WP_Error( '404', 'Bylines not found, no post id provided.' );
-		} else {
-			$parent_post_id       = wp_get_post_parent_id( $post_id );
-			$this->post_id        = 0 !== $parent_post_id ? $parent_post_id : $post_id;
-			$this->should_display = $this->determine_bylines_display();
-			$this->bylines        = $this->get();
-		}
+	public function __construct( int $post_id ) {
+		$parent_post_id       = wp_get_post_parent_id( $post_id );
+		$this->post_id        = 0 !== $parent_post_id ? $parent_post_id : $post_id;
+		$this->should_display = $this->determine_bylines_display();
+		$this->bylines        = $this->get();
 	}
 
 	/**
@@ -58,11 +55,11 @@ class Bylines {
 	 * @param array $bylines The bylines.
 	 * @return array The staff objects.
 	 */
-	private function get_staff_objects( $bylines = array() ) {
+	private function get_staff_objects( array $bylines = array() ): array {
 		$to_return = array();
 		foreach ( $bylines as $byline ) {
-			// If the byline is empty or malformed, skip it.
-			if ( ! array_key_exists( 'termId', $byline ) ) {
+			// If the byline is empty, malformed, or has a null/non-integer termId, skip it.
+			if ( ! array_key_exists( 'termId', $byline ) || ! is_int( $byline['termId'] ) ) {
 				continue;
 			}
 			$staff = new Staff( false, $byline['termId'] );
@@ -76,10 +73,9 @@ class Bylines {
 	/**
 	 * Gets the bylines.
 	 *
-	 * @return array The bylines.
+	 * @return array|WP_Error The bylines.
 	 */
-	public function get() {
-		$bylines = array();
+	public function get(): array|WP_Error {
 		$bylines = get_post_meta( $this->post_id, 'bylines', true );
 		if ( ! is_array( $bylines ) ) {
 			return new WP_Error( '404', 'Bylines not found, no bylines found for this post ' . $this->post_id );
@@ -92,7 +88,7 @@ class Bylines {
 	 *
 	 * @return bool Whether the bylines should be displayed.
 	 */
-	private function determine_bylines_display() {
+	private function determine_bylines_display(): bool {
 		$should_display = get_post_meta( $this->post_id, 'displayBylines', true );
 		return rest_sanitize_boolean( $should_display );
 	}
@@ -103,7 +99,7 @@ class Bylines {
 	 * @param bool $return_html Whether to return HTML.
 	 * @return string The formatted bylines.
 	 */
-	private function format_string( $return_html = false ) {
+	private function format_string( bool $return_html = false ): string {
 		if ( ! is_array( $this->bylines ) ) {
 			return '';
 		}
@@ -146,7 +142,7 @@ class Bylines {
 	 * @param string $type The type of format.
 	 * @return mixed The formatted bylines.
 	 */
-	public function format( $type = 'array' ) {
+	public function format( string $type = 'array' ): mixed {
 		if ( 'array' === $type ) {
 			return $this->bylines;
 		}
@@ -156,5 +152,6 @@ class Bylines {
 		if ( 'html' === $type ) {
 			return $this->format_string( true );
 		}
+		return $this->bylines;
 	}
 }

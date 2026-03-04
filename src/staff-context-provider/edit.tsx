@@ -22,31 +22,35 @@ const ALLOWED_BLOCKS = [
 	'prc-block/staff-info',
 ];
 
+interface EditProps {
+	attributes: {
+		allowedBlocks?: string[];
+		staffSlug?: string;
+	};
+	setAttributes: (attrs: Partial<EditProps['attributes']>) => void;
+	context: {
+		postId?: number;
+		postType?: string;
+	};
+	clientId: string;
+	isSelected: boolean;
+}
+
 /**
  * The edit function describes the structure of your block in the context of the
  * editor. This represents what the editor will render when the block is used.
  *
  * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-edit-save/#edit
- *
- * @param {Object}   props               Properties passed to the function.
- * @param {Object}   props.attributes    Available block attributes.
- * @param {Function} props.setAttributes Function that updates individual attributes.
- * @param {Object}   props.context       Context object with the block's context values.
- * @param {string}   props.clientId      Unique ID of the block.
- * @param {boolean}  props.isSelected    Whether or not the block is currently selected.
- *
- * @return {WPElement} Element to render.
  */
 export default function Edit({
 	attributes,
 	setAttributes,
 	context,
 	clientId,
-	isSelected,
-}) {
+}: EditProps) {
 	const { allowedBlocks, staffSlug } = attributes;
 	const { postId, postType } = context;
-	const [staffId, setStaffId] = useState(null);
+	const [staffId, setStaffId] = useState<number | null>(null);
 
 	useEffect(() => {
 		if (postId && postType === 'staff') {
@@ -60,17 +64,15 @@ export default function Edit({
 		}
 		// If the staffSlug is set, we need to fetch the staff ID from the API.
 		const fetchStaffId = async () => {
-			console.log('fetchStaffId', slugToSearch);
 			await apiFetch({
 				path: `/wp/v2/staff?slug=${slugToSearch}&_fields=id`,
 			})
-				.then((staff) => {
+				.then((staff: any) => {
 					if (
 						staff &&
 						staff.length &&
 						Object.prototype.hasOwnProperty.call(staff[0], 'id')
 					) {
-						console.log('...staff...', staff);
 						setStaffId(staff[0].id);
 					} else {
 						setStaffId(null);

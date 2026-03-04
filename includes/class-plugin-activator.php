@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * Plugin activator.
  *
@@ -18,7 +19,7 @@ class Plugin_Activator {
 	/**
 	 * Activate the plugin.
 	 */
-	public static function activate() {
+	public static function activate(): void {
 		flush_rewrite_rules();
 
 		wp_mail(

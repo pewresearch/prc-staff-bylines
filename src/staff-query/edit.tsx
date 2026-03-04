@@ -19,20 +19,24 @@ import useStaffBlockContextProvider from './use-staff-block-context-provider';
 
 const ALLOWED_BLOCKS = ['prc-block/staff-info', 'core/group'];
 
+interface EditProps {
+	clientId: string;
+	attributes: {
+		allowedBlocks?: string[];
+		staffType?: Record<string, unknown>;
+		researchArea?: Record<string, unknown>;
+		style?: Record<string, unknown>;
+	};
+	setAttributes: (attrs: Partial<EditProps['attributes']>) => void;
+}
+
 /**
  * The edit function describes the structure of your block in the context of the
  * editor. This represents what the editor will render when the block is used.
  *
  * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-edit-save/#edit
- *
- * @param {Object}   props               Properties passed to the function.
- * @param {Object}   props.attributes    Available block attributes.
- * @param {string}   props.clientId      The block's client ID.
- * @param {Function} props.setAttributes Function that updates individual attributes.
- *
- * @return {WPElement} Element to render.
  */
-export default function Edit({ clientId, attributes, setAttributes }) {
+export default function Edit({ clientId, attributes, setAttributes }: EditProps) {
 	const { allowedBlocks } = attributes;
 
 	const {

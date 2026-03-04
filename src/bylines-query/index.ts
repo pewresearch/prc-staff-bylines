@@ -5,10 +5,6 @@
  */
 
 /**
- * External Dependencies
- */
-
-/**
  * WordPress Dependencies
  */
 import { registerBlockType } from '@wordpress/blocks';
@@ -16,6 +12,7 @@ import { registerBlockType } from '@wordpress/blocks';
 /**
  * Internal Dependencies
  */
+
 /**
  * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
  * All files containing `style` keyword are bundled together. The code used
@@ -28,12 +25,14 @@ import './style.scss';
 import './editor.scss';
 import edit from './edit';
 import save from './save';
+import icon from './icon';
 
 import metadata from './block.json';
 
 const { name } = metadata;
 
 const settings = {
+	icon,
 	edit,
 	save,
 };

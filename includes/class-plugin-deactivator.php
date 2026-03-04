@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * Plugin deactivator.
  *
@@ -18,7 +19,7 @@ class Plugin_Deactivator {
 	/**
 	 * Deactivate the plugin.
 	 */
-	public static function deactivate() {
+	public static function deactivate(): void {
 		flush_rewrite_rules();
 
 		wp_mail(

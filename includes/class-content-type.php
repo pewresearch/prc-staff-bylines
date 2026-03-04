@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * Content Type class.
  *
@@ -21,21 +22,21 @@ class Content_Type {
 	 *
 	 * @var string
 	 */
-	public static $post_object_name = 'staff';
+	public static string $post_object_name = 'staff';
 
 	/**
 	 * The name of the taxonomy object.
 	 *
 	 * @var string
 	 */
-	public static $taxonomy_object_name = 'bylines';
+	public static string $taxonomy_object_name = 'bylines';
 
 	/**
 	 * The staff post type arguments.
 	 *
 	 * @var array
 	 */
-	public static $staff_post_type_args = array(
+	public static array $staff_post_type_args = array(
 		'labels'             => array(
 			'name'               => 'Staff',
 			'singular_name'      => 'Staff',
@@ -67,7 +68,7 @@ class Content_Type {
 		'hierarchical'       => false,
 		'menu_position'      => 70,
 		'taxonomies'         => array( 'areas-of-expertise', 'bylines', 'staff-type', 'research-teams' ),
-		'supports'           => array( 'title', 'editor', 'thumbnail', 'revisions', 'author', 'custom-fields', 'excerpt' ),
+		'supports'           => array( 'title', 'editor', 'thumbnail', 'revisions', 'author', 'custom-fields', 'excerpt', 'prc-schema-seo', 'prc-social' ),
 	);
 
 	/**
@@ -75,7 +76,7 @@ class Content_Type {
 	 *
 	 * @var array
 	 */
-	public static $staff_type_taxonomy_args = array(
+	public static array $staff_type_taxonomy_args = array(
 		'hierarchical'      => true,
 		'labels'            => array(
 			'name'                       => 'Staff Type',
@@ -86,7 +87,7 @@ class Content_Type {
 			'parent_item'                => null,
 			'parent_item_colon'          => null,
 			'edit_item'                  => 'Edit Staff Type',
-			'update_item'                => 'Update Staff Type',
+			'update_item'               => 'Update Staff Type',
 			'add_new_item'               => 'Add New Staff Type',
 			'new_item_name'              => 'New Staff Type Name',
 			'separate_items_with_commas' => 'Separate staff type with commas',
@@ -104,7 +105,7 @@ class Content_Type {
 	 *
 	 * @var array
 	 */
-	public static $expertise_taxonomy_args = array(
+	public static array $expertise_taxonomy_args = array(
 		'hierarchical'      => true,
 		'labels'            => array(
 			'name'                       => 'Areas of Expertise',
@@ -138,7 +139,7 @@ class Content_Type {
 	 *
 	 * @var array
 	 */
-	public static $byline_taxonomy_args = array(
+	public static array $byline_taxonomy_args = array(
 		'hierarchical'      => false,
 		'labels'            => array(
 			'name'                       => 'Bylines',
@@ -172,7 +173,7 @@ class Content_Type {
 	 *
 	 * @var array
 	 */
-	public static $field_schema = array(
+	public static array $field_schema = array(
 		'items' => array(
 			'type'       => 'object',
 			'properties' => array(
@@ -189,18 +190,27 @@ class Content_Type {
 	/**
 	 * Constructor.
 	 *
-	 * @param object $loader The loader object.
+	 * @param Loader $loader The loader object.
 	 */
-	public function __construct( $loader ) {
+	public function __construct( Loader $loader ) {
+		$loader->add_action( 'init', $this, 'register_default_post_type_support', 5 );
 		$loader->add_action( 'init', $this, 'init' );
 		$loader->add_filter( 'tds_balancing_from_term', $this, 'override_term_data_store_for_guests', 10, 4 );
 		$loader->add_filter( 'posts_orderby', $this, 'orderby_last_name', PHP_INT_MAX, 2 );
 		$loader->add_filter( 'rest_staff_collection_params', $this, 'filter_add_rest_orderby_params', 10, 1 );
 		$loader->add_action( 'pre_get_posts', $this, 'hide_former_staff', 10, 1 );
 		$loader->add_filter( 'the_title', $this, 'indicate_former_staff', 10, 1 );
-		$loader->add_filter( 'post_link', $this, 'modify_staff_permalink', 10, 2 );
 		$loader->add_filter( 'prc_sitemap_supported_taxonomies', $this, 'opt_into_sitemap', 10, 1 );
 		$loader->add_filter( 'prc_platform_pub_listing_default_args', $this, 'opt_into_pub_listing', 10, 1 );
+	}
+
+	/**
+	 * Register default post type support for bylines.
+	 *
+	 * @hook init
+	 */
+	public function register_default_post_type_support(): void {
+		add_post_type_support( 'post', 'prc-bylines' );
 	}
 
 	/**
@@ -208,8 +218,20 @@ class Content_Type {
 	 *
 	 * @return array The enabled post types.
 	 */
-	public static function get_enabled_post_types() {
-		return apply_filters( 'prc_platform__bylines_enabled_post_types', array( 'post' ) );
+	public static function get_enabled_post_types(): array {
+		$post_types         = get_post_types( array( 'public' => true ), 'names' );
+		$supported_types    = array_values(
+			array_filter(
+				$post_types,
+				function ( $pt ) {
+					return post_type_supports( $pt, 'prc-bylines' );
+				}
+			)
+		);
+		// Maintain backward compatibility with filter.
+		$filter_types       = apply_filters( 'prc_platform__bylines_enabled_post_types', array() );
+		$enabled_post_types = array_unique( array_merge( $supported_types, $filter_types ) );
+		return array_values( $enabled_post_types );
 	}
 
 	/**
@@ -217,7 +239,7 @@ class Content_Type {
 	 *
 	 * @hook init
 	 */
-	public function init() {
+	public function init(): void {
 		$enabled_post_types = self::get_enabled_post_types();
 
 		register_post_type( self::$post_object_name, self::$staff_post_type_args );
@@ -242,7 +264,7 @@ class Content_Type {
 	 * @param array $taxonomy_types The taxonomy types.
 	 * @return array The taxonomy types.
 	 */
-	public function opt_into_sitemap( $taxonomy_types ) {
+	public function opt_into_sitemap( array $taxonomy_types ): array {
 		$taxonomy_types[] = self::$taxonomy_object_name;
 		return $taxonomy_types;
 	}
@@ -252,7 +274,7 @@ class Content_Type {
 	 *
 	 * @param array $enabled_post_types The enabled post types.
 	 */
-	public function register_meta_fields( $enabled_post_types ) {
+	public function register_meta_fields( array $enabled_post_types ): void {
 		register_post_meta(
 			self::$post_object_name,
 			'jobTitle',
@@ -358,6 +380,25 @@ class Content_Type {
 			)
 		);
 
+		// Media contact designation for expertise areas.
+		// DEPRECATED: This meta field is no longer used. Contact designation is now stored
+		// on the expertise term itself (contact_staff_id in _prc_seo_term_data).
+		// Kept for backward compatibility but should not be used in new code.
+		register_post_meta(
+			self::$post_object_name,
+			'_prc_media_contact_for_expertise',
+			array(
+				'description'   => 'DEPRECATED: Expertise areas this staff member is a media contact for. Use contact_staff_id on expertise terms instead.',
+				'type'          => 'array',
+				'single'        => true,
+				'show_in_rest'  => false, // Disabled in REST API to prevent UI from showing it.
+				'default'       => array(),
+				'auth_callback' => function () {
+					return current_user_can( 'edit_posts' );
+				},
+			)
+		);
+
 		// Register bylines, acknowledgements, and displayBylines toggle meta for posts.
 		foreach ( $enabled_post_types as $post_type ) {
 			register_post_meta(
@@ -420,14 +461,14 @@ class Content_Type {
 	 * @param integer $term_id The term ID.
 	 * @return boolean
 	 */
-	public function override_term_data_store_for_guests( $allow, $taxonomy, $post_type, $term_id ) {
+	public function override_term_data_store_for_guests( $allow, $taxonomy, $post_type, $term_id ): bool {
 		if ( self::$taxonomy_object_name === $taxonomy ) {
 			$term_meta = get_term_meta( $term_id, 'is_guest_author', true );
 			if ( $term_meta ) {
 				return true;
 			}
 		}
-		return $allow;
+		return (bool) $allow;
 	}
 
 	/**
@@ -437,9 +478,9 @@ class Content_Type {
 	 *
 	 * @param mixed    $orderby The orderby.
 	 * @param WP_Query $query The query.
-	 * @return mixed The orderby.
+	 * @return string The orderby.
 	 */
-	public function orderby_last_name( $orderby, WP_Query $query ) {
+	public function orderby_last_name( $orderby, WP_Query $query ): string {
 		$order = $query->get( 'order' );
 		global $wpdb;
 		if ( 'last_name' === $query->get( 'orderby' ) && $order ) {
@@ -461,7 +502,7 @@ class Content_Type {
 	 * @param array $params The parameters.
 	 * @return array The parameters.
 	 */
-	public function filter_add_rest_orderby_params( $params ) {
+	public function filter_add_rest_orderby_params( array $params ): array {
 		$params['orderby']['enum'][] = 'last_name';
 		return $params;
 	}
@@ -473,9 +514,9 @@ class Content_Type {
 	 *
 	 * @param mixed $query The query.
 	 */
-	public function hide_former_staff( $query ) {
+	public function hide_former_staff( $query ): void {
 		if ( true === $query->get( 'isPubListingQuery' ) ) {
-			return $query;
+			return;
 		}
 		if ( $query->is_main_query() && ( is_tax( 'areas-of-expertise' ) || is_tax( 'bylines' ) ) ) {
 			$tax_query = $query->get( 'tax_query' );
@@ -497,46 +538,23 @@ class Content_Type {
 	 * @hook the_title
 	 *
 	 * @param mixed $title The title.
-	 * @return mixed The title.
+	 * @return string The title.
 	 */
-	public function indicate_former_staff( $title ) {
+	public function indicate_former_staff( $title ): string {
 		if ( ! is_admin() ) {
-			return $title;
+			return (string) $title;
 		}
 
 		global $post;
 		if ( get_post_type( $post ) !== self::$post_object_name ) {
-			return $title;
+			return (string) $title;
 		}
 
 		$staff = new Staff( $post->ID );
 		if ( true !== $staff->is_currently_employed ) {
 			$title = 'FORMER: ' . $title;
 		}
-		return $title;
-	}
-
-	/**
-	 * Modifies the staff permalink to point to the bylines term archive permalink.
-	 *
-	 * @hook post_link
-	 *
-	 * @param string  $url The URL.
-	 * @param WP_Post $post The post.
-	 * @return string The URL.
-	 */
-	public function modify_staff_permalink( $url, $post ) {
-		if ( 'publish' !== $post->post_status ) {
-			return $url;
-		}
-		if ( self::$post_object_name === $post->post_type ) {
-			$staff       = new Staff( $post->ID );
-			$matched_url = $staff->link;
-			if ( ! is_wp_error( $matched_url ) ) {
-				return $matched_url;
-			}
-		}
-		return $url;
+		return (string) $title;
 	}
 
 	/**
@@ -547,7 +565,7 @@ class Content_Type {
 	 * @param array $args The arguments.
 	 * @return array The arguments.
 	 */
-	public function opt_into_pub_listing( $args = array() ) {
+	public function opt_into_pub_listing( array $args = array() ): array {
 		// Only include staff post type when there's a search term present.
 		$is_searching = array_key_exists( 's', $args ) && ! empty( $args['s'] );
 		if ( ! $is_searching ) {

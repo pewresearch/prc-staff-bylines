@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * REST API class.
  *
@@ -17,7 +18,7 @@ class REST_API {
 	 *
 	 * @param Loader $loader The loader.
 	 */
-	public function __construct( $loader ) {
+	public function __construct( Loader $loader ) {
 		$loader->add_action( 'rest_api_init', $this, 'add_staff_info_term' );
 	}
 
@@ -27,7 +28,7 @@ class REST_API {
 	 * @hook rest_api_init
 	 * @return void
 	 */
-	public function add_staff_info_term() {
+	public function add_staff_info_term(): void {
 		register_rest_field(
 			Content_Type::$taxonomy_object_name,
 			'staffInfo',
@@ -51,7 +52,7 @@ class REST_API {
 	 * @param mixed $object The object.
 	 * @return array The staff info.
 	 */
-	public function get_staff_info_for_byline_term( $object ) {
+	public function get_staff_info_for_byline_term( mixed $object ): array {
 		return $this->get_staff_info_for_api( $object, Content_Type::$taxonomy_object_name );
 	}
 
@@ -61,7 +62,7 @@ class REST_API {
 	 * @param mixed $object The object.
 	 * @return array The staff info.
 	 */
-	public function get_staff_info_for_staff_post( $object ) {
+	public function get_staff_info_for_staff_post( mixed $object ): array {
 		return $this->get_staff_info_for_api( $object, Content_Type::$post_object_name );
 	}
 
@@ -72,7 +73,7 @@ class REST_API {
 	 * @param string $type The type.
 	 * @return array The staff info.
 	 */
-	private function get_staff_info_for_api( $object, $type ) {
+	private function get_staff_info_for_api( mixed $object, string $type ): array {
 		$byline_term_id = false;
 		$staff_post_id  = false;
 		if ( $type && Content_Type::$post_object_name === $type ) {
@@ -83,7 +84,7 @@ class REST_API {
 
 		$staff = new Staff( $staff_post_id, $byline_term_id );
 		if ( is_wp_error( $staff ) ) {
-			return $object;
+			return (array) $object;
 		}
 		$staff_data = get_object_vars( $staff );
 

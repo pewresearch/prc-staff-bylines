@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * Bylines Query Block
  *
@@ -13,7 +14,7 @@ use WP_Block;
  * Block Name:        Bylines Query
  * Description:       Query the current post for bylines and display them.
  * Requires at least: 6.4
- * Requires PHP:      8.1
+ * Requires PHP:      8.2
  * Author:            Seth Rubenstein
  *
  * @package           prc-staff-bylines
@@ -22,18 +23,18 @@ class Bylines_Query {
 	/**
 	 * Constructor
 	 *
-	 * @param mixed $loader Loader.
+	 * @param Loader $loader Loader.
 	 */
-	public function __construct( $loader ) {
+	public function __construct( Loader $loader ) {
 		$this->init( $loader );
 	}
 
 	/**
 	 * Initialize the block
 	 *
-	 * @param mixed $loader Loader.
+	 * @param Loader|null $loader Loader.
 	 */
-	public function init( $loader = null ) {
+	public function init( ?Loader $loader = null ): void {
 		if ( null !== $loader ) {
 			$loader->add_action( 'init', $this, 'block_init' );
 		}
@@ -42,10 +43,10 @@ class Bylines_Query {
 	/**
 	 * Query bylines
 	 *
-	 * @param mixed $post_id Post ID.
+	 * @param int $post_id Post ID.
 	 * @return array
 	 */
-	public function query_bylines( $post_id ) {
+	public function query_bylines( int $post_id ): array {
 		$byline_terms = get_post_meta( $post_id, 'bylines', true );
 		$bylines      = array();
 		if ( $byline_terms ) {
@@ -66,13 +67,13 @@ class Bylines_Query {
 	/**
 	 * Render block callback
 	 *
-	 * @param mixed $attributes Attributes.
-	 * @param mixed $content Content.
-	 * @param mixed $block Block.
+	 * @param array    $attributes Attributes.
+	 * @param string   $content Content.
+	 * @param WP_Block $block Block.
 	 * @return string
 	 */
-	public function render_block_callback( $attributes, $content, $block ) {
-		$bylines = $this->query_bylines( get_the_ID() );
+	public function render_block_callback( array $attributes, string $content, WP_Block $block ): string {
+		$bylines = $this->query_bylines( (int) get_the_ID() );
 
 		$block_attrs = get_block_wrapper_attributes();
 
@@ -111,7 +112,7 @@ class Bylines_Query {
 	 *
 	 * @see https://developer.wordpress.org/reference/functions/register_block_type/
 	 */
-	public function block_init() {
+	public function block_init(): void {
 		register_block_type_from_metadata(
 			PRC_STAFF_BYLINES_DIR . '/build/bylines-query',
 			array(

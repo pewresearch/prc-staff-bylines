@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * Staff Context Provider Block
  *
@@ -13,7 +14,7 @@ use WP_Block;
  * Block Name:        Staff Context Provider
  * Description:       Provides information about a Staff member via termId and passes that information via block context to its innerblocks.
  * Requires at least: 6.4
- * Requires PHP:      8.1
+ * Requires PHP:      8.2
  * Author:            Pew Research Center
  *
  * @package           prc-staff-bylines
@@ -22,18 +23,18 @@ class Staff_Context_Provider {
 	/**
 	 * Constructor
 	 *
-	 * @param mixed $loader Loader.
+	 * @param Loader $loader Loader.
 	 */
-	public function __construct( $loader ) {
+	public function __construct( Loader $loader ) {
 		$this->init( $loader );
 	}
 
 	/**
 	 * Initialize the block
 	 *
-	 * @param mixed $loader Loader.
+	 * @param Loader|null $loader Loader.
 	 */
-	public function init( $loader = null ) {
+	public function init( ?Loader $loader = null ): void {
 		if ( null !== $loader ) {
 			$loader->add_action( 'init', $this, 'block_init' );
 		}
@@ -42,12 +43,12 @@ class Staff_Context_Provider {
 	/**
 	 * Render the block
 	 *
-	 * @param array  $attributes Block attributes.
-	 * @param string $content Block content.
-	 * @param array  $block WP_Block object.
+	 * @param array    $attributes Block attributes.
+	 * @param string   $content Block content.
+	 * @param WP_Block $block WP_Block object.
 	 * @return string
 	 */
-	public function render_block_callback( $attributes, $content, $block ) {
+	public function render_block_callback( array $attributes, string $content, WP_Block $block ): string {
 		$staff_id = false;
 		$term_id  = false;
 		// check if staffSlug in attributes exists, if so get the staff post id by slug...
@@ -64,11 +65,11 @@ class Staff_Context_Provider {
 				$queried_object = get_queried_object();
 				// check if taxonomy exists on the queried object, if so get the term id...
 				if ( ! is_a( $queried_object, 'WP_Term' ) ) {
-					return $context;
+					return '';
 				}
 				$taxonomy = $queried_object->taxonomy;
 				if ( 'bylines' !== $taxonomy ) {
-					return $context;
+					return '';
 				}
 				$term_id = get_queried_object_id();
 			}
@@ -106,7 +107,7 @@ class Staff_Context_Provider {
 	 *
 	 * @see https://developer.wordpress.org/reference/functions/register_block_type/
 	 */
-	public function block_init() {
+	public function block_init(): void {
 		register_block_type_from_metadata(
 			PRC_STAFF_BYLINES_DIR . '/build/staff-context-provider',
 			array(

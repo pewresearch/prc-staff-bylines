@@ -13,13 +13,13 @@
 		"test:env:destroy": "wp-env destroy"
 	},
 	"devDependencies": {
+		"@faker-js/faker": "^9.7.0",
 		"@playwright/test": "^1.55.1",
 		"@wordpress/e2e-test-utils-playwright": "^1.32.0",
 		"@wordpress/env": "^10.32.0",
 		"@wordpress/scripts": "^30.25.0"
 	},
 	"dependencies": {
-		"@faker-js/faker": "^9.7.0",
 		"@wordpress/icons": "^10.22.0",
 		"@emotion/styled": "^11.14.0",
 		"react-movable": "^3.0.4"
