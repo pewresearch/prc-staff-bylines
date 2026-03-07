@@ -93,13 +93,18 @@ class Staff_Info {
 	 */
 	public function get_staff_info_for_block_binding( mixed $source_args, mixed $block, mixed $attribute_name ): mixed {
 		$block_context = $block->context;
-		$staff_post_id = array_key_exists( 'staffId', $block_context ) ? $block_context['staffId'] : false;
-		if ( false === $staff_post_id ) {
+		$staff_id = array_key_exists( 'staffId', $block_context ) ? $block_context['staffId'] : false;
+		if ( false === $staff_id ) {
 			return null;
 		}
 		// First instance lets set the $this->block_bound_staff to the staff object so its available for later blocks.
-		if ( false === $this->block_bound_staff || $this->block_bound_staff['ID'] !== $staff_post_id ) {
-			$staff                   = new Staff( $staff_post_id );
+		if ( false === $this->block_bound_staff || $this->block_bound_staff['ID'] !== $staff_id ) {
+			if ( is_string( $staff_id ) && str_starts_with( $staff_id, 'guest_' ) ) {
+				$term_id = (int) str_replace( 'guest_', '', $staff_id );
+				$staff   = new Staff( false, $term_id );
+			} else {
+				$staff = new Staff( (int) $staff_id );
+			}
 			$this->block_bound_staff = get_object_vars( $staff );
 		}
 
