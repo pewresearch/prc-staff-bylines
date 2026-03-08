@@ -102,8 +102,13 @@ class Staff_Info {
 			if ( is_string( $staff_id ) && str_starts_with( $staff_id, 'guest_' ) ) {
 				$term_id = (int) str_replace( 'guest_', '', $staff_id );
 				$staff   = new Staff( false, $term_id );
-			} else {
+			} elseif ( is_numeric( $staff_id ) ) {
 				$staff = new Staff( (int) $staff_id );
+			} else {
+				return null;
+			}
+			if ( empty( $staff->ID ) ) {
+				return null;
 			}
 			$this->block_bound_staff = get_object_vars( $staff );
 		}

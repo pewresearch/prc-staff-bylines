@@ -51,9 +51,13 @@ class Bylines_Query {
 		$bylines      = array();
 		if ( $byline_terms ) {
 			foreach ( $byline_terms as $byline_term ) {
-				$byline_term_id = $byline_term['termId'];
+				$byline_term_id = $byline_term['termId'] ?? null;
+				if ( ! is_int( $byline_term_id ) && ! is_numeric( $byline_term_id ) ) {
+					continue;
+				}
+				$byline_term_id = (int) $byline_term_id;
 				$staff          = new Staff( false, $byline_term_id );
-				if ( is_wp_error( $staff ) ) {
+				if ( is_wp_error( $staff ) || empty( $staff->ID ) ) {
 					continue;
 				}
 				$bylines[] = array(
