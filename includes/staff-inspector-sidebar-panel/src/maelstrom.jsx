@@ -8,10 +8,13 @@ import { TermSelect } from '@prc/components';
  */
 
 import { useMemo } from '@wordpress/element';
-import { useSelect, useDispatch } from '@wordpress/data';
+import { useSelect } from '@wordpress/data';
 import { useEntityProp } from '@wordpress/core-data';
-import { ToggleControl } from '@wordpress/components';
-import { PluginDocumentSettingPanel } from '@wordpress/edit-post';
+import {
+	ToggleControl,
+	__experimentalVStack as VStack,
+} from '@wordpress/components';
+import { PluginDocumentSettingPanel } from '@wordpress/editor';
 
 export default function MaelstromPanel() {
 	const { postType, postId } = useSelect(
@@ -51,7 +54,6 @@ export default function MaelstromPanel() {
 				restricted: newValue,
 			},
 		});
-		console.log('meta...',meta);
 	};
 
 	const updateEnabled = (value) => {
@@ -68,28 +70,31 @@ export default function MaelstromPanel() {
 			name="prc-staff-info-safety"
 			title="Staff Safety (Maelstrom)"
 		>
-			<ToggleControl
-				label="Enable Maelstrom"
-				checked={enabled}
-				onChange={() => {
-					updateEnabled(!enabled);
-				}}
-			/>
-			{enabled && (
-				<TermSelect
-					{...{
-						onChange: (x) => {
-							console.log('MAELSTROM', x);
-							updateRestricted(x.name);
-						},
-						// @TODO: Further obfuscate this naming
-						taxonomy: 'regions-countries',
-						value: restricted,
-						maxTerms: 5,
-						label: 'Select a region to restrict',
+			<VStack spacing="2">
+				<ToggleControl
+					label="Enable Maelstrom"
+					checked={enabled}
+					onChange={() => {
+						updateEnabled(!enabled);
 					}}
 				/>
-			)}
+				{enabled && (
+					<TermSelect
+						{...{
+							onChange: (x) => {
+								if (x?.name) {
+									updateRestricted(x.name);
+								}
+							},
+							// @TODO: Further obfuscate this naming
+							taxonomy: 'regions-countries',
+							value: restricted,
+							maxTerms: 5,
+							label: 'Select a region to restrict',
+						}}
+					/>
+				)}
+			</VStack>
 		</PluginDocumentSettingPanel>
 	);
 }

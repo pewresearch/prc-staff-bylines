@@ -43,8 +43,11 @@ class Bylines {
 	 * @param int $post_id The post ID.
 	 */
 	public function __construct( int $post_id ) {
-		$parent_post_id       = wp_get_post_parent_id( $post_id );
-		$this->post_id        = 0 !== $parent_post_id ? $parent_post_id : $post_id;
+		$parent_post_id = wp_get_post_parent_id( $post_id );
+		// wp_get_post_parent_id() returns int|false; false must not be assigned to int $post_id.
+		$this->post_id        = ( is_int( $parent_post_id ) && $parent_post_id > 0 )
+			? $parent_post_id
+			: $post_id;
 		$this->should_display = $this->determine_bylines_display();
 		$this->bylines        = $this->get();
 	}
@@ -86,11 +89,20 @@ class Bylines {
 	/**
 	 * Determines whether the bylines should be displayed.
 	 *
+	 * `displayBylines` is registered with `'default' => true`, but `get_post_meta()`
+	 * only honors that default when the meta key is registered for the current
+	 * post type — and even then, an explicitly-saved `false` is persisted as the
+	 * empty string `''` (MySQL stores boolean false via `%s` as ''). We must
+	 * distinguish "no row yet" (use default of true) from "row exists with falsy
+	 * value" (user toggled it off), otherwise the editor toggle is a no-op.
+	 *
 	 * @return bool Whether the bylines should be displayed.
 	 */
 	private function determine_bylines_display(): bool {
-		$should_display = get_post_meta( $this->post_id, 'displayBylines', true );
-		return rest_sanitize_boolean( $should_display );
+		if ( ! metadata_exists( 'post', $this->post_id, 'displayBylines' ) ) {
+			return true;
+		}
+		return rest_sanitize_boolean( get_post_meta( $this->post_id, 'displayBylines', true ) );
 	}
 
 	/**

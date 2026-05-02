@@ -68,7 +68,7 @@ class Content_Type {
 		'hierarchical'       => false,
 		'menu_position'      => 70,
 		'taxonomies'         => array( 'areas-of-expertise', 'bylines', 'staff-type', 'research-teams' ),
-		'supports'           => array( 'title', 'editor', 'thumbnail', 'revisions', 'author', 'custom-fields', 'excerpt', 'prc-schema-seo', 'prc-social' ),
+		'supports'           => array( 'title', 'editor', 'thumbnail', 'revisions', 'author', 'custom-fields', 'excerpt', 'prc-schema-seo', 'prc-social-builder' ),
 	);
 
 	/**
@@ -87,7 +87,7 @@ class Content_Type {
 			'parent_item'                => null,
 			'parent_item_colon'          => null,
 			'edit_item'                  => 'Edit Staff Type',
-			'update_item'               => 'Update Staff Type',
+			'update_item'                => 'Update Staff Type',
 			'add_new_item'               => 'Add New Staff Type',
 			'new_item_name'              => 'New Staff Type Name',
 			'separate_items_with_commas' => 'Separate staff type with commas',
@@ -194,7 +194,12 @@ class Content_Type {
 	 */
 	public function __construct( Loader $loader ) {
 		$loader->add_action( 'init', $this, 'register_default_post_type_support', 5 );
-		$loader->add_action( 'init', $this, 'init' );
+		// Priority 5 so CPT/taxonomies exist before core rest_api_init runs at init:10.
+		$loader->add_action( 'init', $this, 'init', 5 );
+		// Priority 11 so post-like-types (and any other CPTs added at init:10) have
+		// declared `prc-bylines` support before we loop over enabled post types and
+		// register the `bylines`, `acknowledgements`, and `displayBylines` meta on them.
+		$loader->add_action( 'init', $this, 'register_meta', 11 );
 		$loader->add_filter( 'tds_balancing_from_term', $this, 'override_term_data_store_for_guests', 10, 4 );
 		$loader->add_filter( 'posts_orderby', $this, 'orderby_last_name', PHP_INT_MAX, 2 );
 		$loader->add_filter( 'rest_staff_collection_params', $this, 'filter_add_rest_orderby_params', 10, 1 );
@@ -219,8 +224,8 @@ class Content_Type {
 	 * @return array The enabled post types.
 	 */
 	public static function get_enabled_post_types(): array {
-		$post_types         = get_post_types( array( 'public' => true ), 'names' );
-		$supported_types    = array_values(
+		$post_types      = get_post_types( array( 'public' => true ), 'names' );
+		$supported_types = array_values(
 			array_filter(
 				$post_types,
 				function ( $pt ) {
@@ -235,7 +240,12 @@ class Content_Type {
 	}
 
 	/**
-	 * Initialize the class with the hybrid post type, associated taxonomies, and meta fields.
+	 * Initialize the class with the hybrid post type and associated taxonomies.
+	 *
+	 * Meta registration is intentionally deferred to `register_meta()` at init:11,
+	 * after post-like-types and other CPTs registered at init:10 have declared
+	 * `prc-bylines` support. Otherwise their `displayBylines` default never lands
+	 * in the meta registry and `get_post_meta()` returns '' for unset values.
 	 *
 	 * @hook init
 	 */
@@ -251,8 +261,18 @@ class Content_Type {
 		register_taxonomy( 'staff-type', self::$post_object_name, self::$staff_type_taxonomy_args );
 
 		// Link the post object and taxonomy object into one entity.
-		\TDS\add_relationship( self::$post_object_name, self::$taxonomy_object_name );
+		\PRC\TDS\add_relationship( self::$post_object_name, self::$taxonomy_object_name );
+	}
 
+	/**
+	 * Register byline-related post meta on every post type that supports `prc-bylines`.
+	 *
+	 * Runs at init:11 so post-like-types (registered at init:10) are included.
+	 *
+	 * @hook init
+	 */
+	public function register_meta(): void {
+		$enabled_post_types = self::get_enabled_post_types();
 		$this->register_meta_fields( $enabled_post_types );
 	}
 
@@ -279,11 +299,12 @@ class Content_Type {
 			self::$post_object_name,
 			'jobTitle',
 			array(
-				'description'   => 'This staff member\'s job title.',
-				'show_in_rest'  => true,
-				'single'        => true,
-				'type'          => 'string',
-				'auth_callback' => function () {
+				'description'       => 'This staff member\'s job title.',
+				'show_in_rest'      => true,
+				'revisions_enabled' => true,
+				'single'            => true,
+				'type'              => 'string',
+				'auth_callback'     => function () {
 					return current_user_can( 'edit_posts' );
 				},
 			)
@@ -293,11 +314,12 @@ class Content_Type {
 			self::$post_object_name,
 			'jobTitleExtended',
 			array(
-				'description'   => 'This staff member\'s extended job title, "mini biography"; e.g. ... "is a Senior Researcher focusing on Internet and Technology at the Pew Research Center."',
-				'show_in_rest'  => true,
-				'single'        => true,
-				'type'          => 'string',
-				'auth_callback' => function () {
+				'description'       => 'This staff member\'s extended job title, "mini biography"; e.g. ... "is a Senior Researcher focusing on Internet and Technology at the Pew Research Center."',
+				'show_in_rest'      => true,
+				'revisions_enabled' => true,
+				'single'            => true,
+				'type'              => 'string',
+				'auth_callback'     => function () {
 					return current_user_can( 'edit_posts' );
 				},
 			)
@@ -307,12 +329,13 @@ class Content_Type {
 			self::$post_object_name,
 			'bylineLinkEnabled',
 			array(
-				'description'   => 'Allow this staff member to have a byline link?',
-				'show_in_rest'  => true,
-				'single'        => true,
-				'type'          => 'boolean',
-				'default'       => false,
-				'auth_callback' => function () {
+				'description'       => 'Allow this staff member to have a byline link?',
+				'show_in_rest'      => true,
+				'revisions_enabled' => true,
+				'single'            => true,
+				'type'              => 'boolean',
+				'default'           => false,
+				'auth_callback'     => function () {
 					return current_user_can( 'edit_posts' );
 				},
 			)
@@ -326,8 +349,8 @@ class Content_Type {
 			self::$post_object_name,
 			'_maelstrom',
 			array(
-				'description'   => '',
-				'show_in_rest'  => array(
+				'description'       => '',
+				'show_in_rest'      => array(
 					'schema' => array(
 						'properties' => array(
 							'enabled'    => array(
@@ -344,9 +367,10 @@ class Content_Type {
 						),
 					),
 				),
-				'single'        => true,
-				'type'          => 'object',
-				'auth_callback' => function () {
+				'single'            => true,
+				'type'              => 'object',
+				'revisions_enabled' => true,
+				'auth_callback'     => function () {
 					return current_user_can( 'edit_posts' );
 				},
 			)
@@ -356,8 +380,8 @@ class Content_Type {
 			self::$post_object_name,
 			'socialProfiles',
 			array(
-				'description'   => 'Social profiles for this staff member.',
-				'show_in_rest'  => array(
+				'description'       => 'Social profiles for this staff member.',
+				'show_in_rest'      => array(
 					'schema' => array(
 						'items' => array(
 							'type'       => 'object',
@@ -372,9 +396,10 @@ class Content_Type {
 						),
 					),
 				),
-				'single'        => true,
-				'type'          => 'array',
-				'auth_callback' => function () {
+				'single'            => true,
+				'type'              => 'array',
+				'revisions_enabled' => true,
+				'auth_callback'     => function () {
 					return current_user_can( 'edit_posts' );
 				},
 			)
@@ -405,12 +430,13 @@ class Content_Type {
 				$post_type,
 				'bylines',
 				array(
-					'single'        => true,
-					'type'          => 'array',
-					'show_in_rest'  => array(
+					'single'            => true,
+					'type'              => 'array',
+					'show_in_rest'      => array(
 						'schema' => self::$field_schema,
 					),
-					'auth_callback' => function () {
+					'revisions_enabled' => true,
+					'auth_callback'     => function () {
 						return current_user_can( 'edit_posts' );
 					},
 				)
@@ -420,12 +446,13 @@ class Content_Type {
 				$post_type,
 				'acknowledgements',
 				array(
-					'single'        => true,
-					'type'          => 'array',
-					'show_in_rest'  => array(
+					'single'            => true,
+					'type'              => 'array',
+					'show_in_rest'      => array(
 						'schema' => self::$field_schema,
 					),
-					'auth_callback' => function () {
+					'revisions_enabled' => true,
+					'auth_callback'     => function () {
 						return current_user_can( 'edit_posts' );
 					},
 				)
@@ -438,11 +465,12 @@ class Content_Type {
 				$post_type,
 				'displayBylines',
 				array(
-					'show_in_rest'  => true,
-					'single'        => true,
-					'type'          => 'boolean',
-					'default'       => true,
-					'auth_callback' => function () {
+					'show_in_rest'      => true,
+					'revisions_enabled' => true,
+					'single'            => true,
+					'type'              => 'boolean',
+					'default'           => true,
+					'auth_callback'     => function () {
 						return current_user_can( 'edit_posts' );
 					},
 				)

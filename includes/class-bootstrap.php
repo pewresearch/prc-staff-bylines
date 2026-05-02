@@ -266,7 +266,7 @@ class Bootstrap {
 		$this->register_editor_asset( $folder_name );
 		$enabled_post_types = false !== $post_type ? array( $post_type ) : Content_Type::get_enabled_post_types();
 		$registered         = wp_script_is( $this->plugin_name . '-' . $folder_name, 'registered' );
-		if ( is_admin() && $registered && in_array( \PRC\Platform\get_wp_admin_current_post_type(), $enabled_post_types, true ) ) {
+		if ( is_admin() && $registered && in_array( \PRC\BlockUtils\get_wp_admin_current_post_type(), $enabled_post_types, true ) ) {
 			wp_enqueue_script( $this->plugin_name . '-' . $folder_name );
 		}
 	}

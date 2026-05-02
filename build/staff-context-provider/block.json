@@ -21,6 +21,9 @@
   "supports": {
     "anchor": true,
     "html": false,
+    "prcMarkdownForAgents": {
+      "mode": "children-only"
+    },
     "interactivity": true
   },
   "usesContext": [

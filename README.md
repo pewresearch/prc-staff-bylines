@@ -1,10 +1,10 @@
 # PRC Staff Bylines
 
-Staff profile and byline management system for the PRC Platform. Links a `staff` custom post type to a `bylines` taxonomy via Term Data Store (TDS), enabling multi-author bylines on any post type while keeping a single source of truth for each person's data.
+Staff profile and byline management system for the PRC Platform. Links a `staff` custom post type to a `bylines` taxonomy via `[prc/term-data-store](https://github.com/pewresearch/term-data-store)` (namespace `PRC\TDS`), enabling multi-author bylines on any post type while keeping a single source of truth for each person's data.
 
 ## What it does
 
-- Registers the `staff` post type and `bylines` taxonomy and binds them through TDS so each staff member is addressable by either a post ID or a term ID.
+- Registers the `staff` post type and `bylines` taxonomy and binds them through `prc/term-data-store` so each staff member is addressable by either a post ID or a term ID.
 - Registers supporting taxonomies: `areas-of-expertise`, `staff-type`.
 - Stores bylines, acknowledgements, and display flags as post meta on any post type that declares `prc-bylines` support.
 - Adds a `staffInfo` REST field to both `bylines` terms and `staff` posts, exposing a normalized staff data object to the editor and frontend consumers.
@@ -17,12 +17,12 @@ Staff profile and byline management system for the PRC Platform. Links a `staff`
 
 ## Post types and taxonomies
 
-| Object | Slug | Notes |
-|---|---|---|
-| Post type | `staff` | Public, REST-enabled, no archive. Linked to `bylines` via TDS. |
-| Taxonomy | `bylines` | Non-hierarchical. Slug rewrite: `/staff/{slug}`. Applied to all post types with `prc-bylines` support. |
-| Taxonomy | `areas-of-expertise` | Hierarchical. Slug rewrite: `/expertise/{slug}`. Staff only. |
-| Taxonomy | `staff-type` | Hierarchical. Used to distinguish current staff from former staff. Staff only. |
+| Object    | Slug                 | Notes                                                                                                  |
+| --------- | -------------------- | ------------------------------------------------------------------------------------------------------ |
+| Post type | `staff`              | Public, REST-enabled, no archive. Linked to `bylines` via `prc/term-data-store`.                       |
+| Taxonomy  | `bylines`            | Non-hierarchical. Slug rewrite: `/staff/{slug}`. Applied to all post types with `prc-bylines` support. |
+| Taxonomy  | `areas-of-expertise` | Hierarchical. Slug rewrite: `/expertise/{slug}`. Staff only.                                           |
+| Taxonomy  | `staff-type`         | Hierarchical. Used to distinguish current staff from former staff. Staff only.                         |
 
 ### Enabling bylines on a post type
 
@@ -43,21 +43,21 @@ add_filter( 'prc_platform__bylines_enabled_post_types', function( $types ) {
 
 ### On `staff` posts
 
-| Key | Type | Description |
-|---|---|---|
-| `jobTitle` | `string` | Staff member's job title. Prefixed with "Former" for inactive staff. |
-| `jobTitleExtended` | `string` | Mini-biography sentence fragment, e.g. "is a Senior Researcher…". |
-| `bylineLinkEnabled` | `boolean` | Controls whether a public byline link and archive page are exposed. |
-| `socialProfiles` | `array` | Array of `{key, url}` social profile objects. |
-| `_maelstrom` | `object` | `{enabled: bool, restricted: string[]}` — staff safety net. See [Maelstrom](#maelstrom). |
+| Key                 | Type      | Description                                                                              |
+| ------------------- | --------- | ---------------------------------------------------------------------------------------- |
+| `jobTitle`          | `string`  | Staff member's job title. Prefixed with "Former" for inactive staff.                     |
+| `jobTitleExtended`  | `string`  | Mini-biography sentence fragment, e.g. "is a Senior Researcher…".                        |
+| `bylineLinkEnabled` | `boolean` | Controls whether a public byline link and archive page are exposed.                      |
+| `socialProfiles`    | `array`   | Array of `{key, url}` social profile objects.                                            |
+| `_maelstrom`        | `object`  | `{enabled: bool, restricted: string[]}` — staff safety net. See [Maelstrom](#maelstrom). |
 
 ### On bylines-enabled post types
 
-| Key | Type | Description |
-|---|---|---|
-| `bylines` | `array` | Ordered array of `{key, termId}` objects referencing `bylines` term IDs. |
-| `acknowledgements` | `array` | Same shape as `bylines`. Tracks acknowledgement credits separately. |
-| `displayBylines` | `boolean` | Defaults `true`. When `false`, bylines blocks suppress output. |
+| Key                | Type      | Description                                                              |
+| ------------------ | --------- | ------------------------------------------------------------------------ |
+| `bylines`          | `array`   | Ordered array of `{key, termId}` objects referencing `bylines` term IDs. |
+| `acknowledgements` | `array`   | Same shape as `bylines`. Tracks acknowledgement credits separately.      |
+| `displayBylines`   | `boolean` | Defaults `true`. When `false`, bylines blocks suppress output.           |
 
 ## REST API
 
@@ -66,10 +66,11 @@ add_filter( 'prc_platform__bylines_enabled_post_types', function( $types ) {
 `staffInfo` is registered as a REST field on both the `bylines` taxonomy and the `staff` post type via `register_rest_field`.
 
 **Endpoints:**
+
 - `GET /wp-json/wp/v2/bylines/<id>` — includes `staffInfo`
 - `GET /wp-json/wp/v2/staff/<id>` — includes `staffInfo`
 
-**`staffInfo` shape:**
+`**staffInfo` shape:\*\*
 
 ```json
 {
@@ -90,41 +91,41 @@ The `staff` REST collection accepts `orderby=last_name` in addition to the stand
 
 ## Blocks
 
-| Block name | Title | Description |
-|---|---|---|
-| `prc-block/bylines-query` | Bylines Query | InnerBlocks container that queries a post's bylines. Accepts `postId` context. |
-| `prc-block/bylines-display` | Bylines Display | Renders the byline list as "By Author 1, Author 2, and Author 3." Configurable prefix. |
-| `prc-block/staff-context-provider` | Staff Context Provider | Wraps inner blocks, resolving a staff member by `staffSlug` and passing data via block context. |
-| `prc-block/staff-query` | Staff Query | Queries the `staff` post type filtered by `staffType` and `researchArea`. For staff listing pages. |
-| `prc-block/staff-info` | Staff Info | Displays resolved staff member data. Intended as an inner block of Staff Context Provider. |
+| Block name                         | Title                  | Description                                                                                        |
+| ---------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------- |
+| `prc-block/bylines-query`          | Bylines Query          | InnerBlocks container that queries a post's bylines. Accepts `postId` context.                     |
+| `prc-block/bylines-display`        | Bylines Display        | Renders the byline list as "By Author 1, Author 2, and Author 3." Configurable prefix.             |
+| `prc-block/staff-context-provider` | Staff Context Provider | Wraps inner blocks, resolving a staff member by `staffSlug` and passing data via block context.    |
+| `prc-block/staff-query`            | Staff Query            | Queries the `staff` post type filtered by `staffType` and `researchArea`. For staff listing pages. |
+| `prc-block/staff-info`             | Staff Info             | Displays resolved staff member data. Intended as an inner block of Staff Context Provider.         |
 
 ### Editor sidebar panels
 
 Two scripts are enqueued via `enqueue_block_editor_assets`:
 
-- **`bylines-inspector-sidebar-panel`** — injected on all `prc-bylines`-enabled post types. Provides the bylines picker UI.
-- **`staff-inspector-sidebar-panel`** — injected on the `staff` post type only. Provides staff-specific meta fields.
+- `**bylines-inspector-sidebar-panel`\*\* — injected on all `prc-bylines`-enabled post types. Provides the bylines picker UI.
+- `**staff-inspector-sidebar-panel`\*\* — injected on the `staff` post type only. Provides staff-specific meta fields.
 
 ## Filters / hooks
 
-| Hook | Direction | Description |
-|---|---|---|
-| `prc_platform__bylines_enabled_post_types` | Filter | Append post type slugs to opt them into the bylines system. Prefer `add_post_type_support( $pt, 'prc-bylines' )` instead. |
-| `tds_balancing_from_term` | Filter | Overrides TDS balancing for guest-author terms to prevent post creation. |
-| `posts_orderby` | Filter | Enables `orderby=last_name` for WP_Query on the `staff` post type. |
-| `rest_staff_collection_params` | Filter | Adds `last_name` to the allowed `orderby` enum on the `staff` REST collection. |
-| `pre_get_posts` | Action | Excludes former staff (not in `staff`, `executive-team`, `managing-directors` staff-types) from `areas-of-expertise` and `bylines` taxonomy archives. |
-| `the_title` | Filter | Prefixes "FORMER: " to staff post titles in the admin only. |
-| `prc_sitemap_supported_taxonomies` | Filter | Opts `bylines` into the platform XML sitemap. |
-| `prc_platform_pub_listing_default_args` | Filter | Includes `staff` post type in pub-listing queries when a search term is present. |
-| `prc_platform_on_publish` | Action | Triggers Maelstrom enforcement on post publish. |
-| `wp_robots` | Filter | Adds `noindex`/`nofollow` to byline term archives for staff with `bylineLinkEnabled = false`. |
-| `wpseo_meta_author` | Filter | Replaces Yoast author meta with the post's bylines string. |
-| `wpseo_opengraph_author_facebook` | Filter | Same as above for Open Graph author tag. |
-| `wpseo_enhanced_slack_data` | Filter | Appends "Written by" label with bylines string to Yoast Slack sharing data. |
-| `template_redirect` | Action | Sets 404 on WordPress native author archives. |
-| `admin_bar_menu` | Action | Replaces the default "Edit Post" admin bar link with "Edit Staff" on byline term archive pages. |
-| `enqueue_block_editor_assets` | Action | Enqueues the bylines and staff inspector sidebar panel scripts. |
+| Hook                                       | Direction | Description                                                                                                                                           |
+| ------------------------------------------ | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prc_platform__bylines_enabled_post_types` | Filter    | Append post type slugs to opt them into the bylines system. Prefer `add_post_type_support( $pt, 'prc-bylines' )` instead.                             |
+| `tds_balancing_from_term`                  | Filter    | Overrides `prc/term-data-store` balancing for guest-author terms to prevent post creation.                                                            |
+| `posts_orderby`                            | Filter    | Enables `orderby=last_name` for WP_Query on the `staff` post type.                                                                                    |
+| `rest_staff_collection_params`             | Filter    | Adds `last_name` to the allowed `orderby` enum on the `staff` REST collection.                                                                        |
+| `pre_get_posts`                            | Action    | Excludes former staff (not in `staff`, `executive-team`, `managing-directors` staff-types) from `areas-of-expertise` and `bylines` taxonomy archives. |
+| `the_title`                                | Filter    | Prefixes "FORMER: " to staff post titles in the admin only.                                                                                           |
+| `prc_sitemap_supported_taxonomies`         | Filter    | Opts `bylines` into the platform XML sitemap.                                                                                                         |
+| `prc_platform_pub_listing_default_args`    | Filter    | Includes `staff` post type in pub-listing queries when a search term is present.                                                                      |
+| `prc_platform_on_publish`                  | Action    | Triggers Maelstrom enforcement on post publish.                                                                                                       |
+| `wp_robots`                                | Filter    | Adds `noindex`/`nofollow` to byline term archives for staff with `bylineLinkEnabled = false`.                                                         |
+| `wpseo_meta_author`                        | Filter    | Replaces Yoast author meta with the post's bylines string.                                                                                            |
+| `wpseo_opengraph_author_facebook`          | Filter    | Same as above for Open Graph author tag.                                                                                                              |
+| `wpseo_enhanced_slack_data`                | Filter    | Appends "Written by" label with bylines string to Yoast Slack sharing data.                                                                           |
+| `template_redirect`                        | Action    | Sets 404 on WordPress native author archives.                                                                                                         |
+| `admin_bar_menu`                           | Action    | Replaces the default "Edit Post" admin bar link with "Edit Staff" on byline term archive pages.                                                       |
+| `enqueue_block_editor_assets`              | Action    | Enqueues the bylines and staff inspector sidebar panel scripts.                                                                                       |
 
 ## WP-CLI commands
 
@@ -142,8 +143,8 @@ Configure via the `_maelstrom` post meta on the `staff` post:
 
 ```json
 {
-  "enabled": false,
-  "restricted": ["Middle East & North Africa", "China"]
+	"enabled": false,
+	"restricted": ["Middle East & North Africa", "China"]
 }
 ```
 
@@ -189,29 +190,29 @@ $bylines->format( 'html' );   // same with <a> or <span> per-author, comma/and s
 
 ## Key files
 
-| File | Purpose |
-|---|---|
-| `prc-staff-bylines.php` | Plugin entry point. Defines constants, registers activation/deactivation hooks, boots Bootstrap. |
-| `includes/class-bootstrap.php` | Wires all classes and blocks to the loader, manages editor asset enqueueing. |
-| `includes/class-content-type.php` | Registers the `staff` CPT, `bylines`, `areas-of-expertise`, and `staff-type` taxonomies. Registers all post meta. |
-| `includes/class-staff.php` | `Staff` data object. Resolves staff members from post ID or term ID, with object cache support. |
-| `includes/class-bylines.php` | `Bylines` data object. Fetches and formats bylines for a given post. |
-| `includes/class-rest-api.php` | Registers the `staffInfo` field on `bylines` terms and `staff` posts. |
-| `includes/class-seo.php` | Integrates with Yoast SEO for author meta and robots directives. |
-| `includes/class-maelstrom.php` | Enforces staff safety net on publish via `prc_platform_on_publish`. |
-| `includes/class-guest-author-commands.php` | WP-CLI command for creating guest-author byline terms. |
-| `includes/bylines-inspector-sidebar-panel/` | Editor panel for managing bylines on posts. |
-| `includes/staff-inspector-sidebar-panel/` | Editor panel for managing staff-specific meta on `staff` posts. |
-| `src/bylines-query/` | Block: `prc-block/bylines-query`. |
-| `src/bylines-display/` | Block: `prc-block/bylines-display`. |
-| `src/staff-context-provider/` | Block: `prc-block/staff-context-provider`. |
-| `src/staff-query/` | Block: `prc-block/staff-query`. |
-| `src/staff-info/` | Block: `prc-block/staff-info`. |
+| File                                        | Purpose                                                                                                           |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `prc-staff-bylines.php`                     | Plugin entry point. Defines constants, registers activation/deactivation hooks, boots Bootstrap.                  |
+| `includes/class-bootstrap.php`              | Wires all classes and blocks to the loader, manages editor asset enqueueing.                                      |
+| `includes/class-content-type.php`           | Registers the `staff` CPT, `bylines`, `areas-of-expertise`, and `staff-type` taxonomies. Registers all post meta. |
+| `includes/class-staff.php`                  | `Staff` data object. Resolves staff members from post ID or term ID, with object cache support.                   |
+| `includes/class-bylines.php`                | `Bylines` data object. Fetches and formats bylines for a given post.                                              |
+| `includes/class-rest-api.php`               | Registers the `staffInfo` field on `bylines` terms and `staff` posts.                                             |
+| `includes/class-seo.php`                    | Integrates with Yoast SEO for author meta and robots directives.                                                  |
+| `includes/class-maelstrom.php`              | Enforces staff safety net on publish via `prc_platform_on_publish`.                                               |
+| `includes/class-guest-author-commands.php`  | WP-CLI command for creating guest-author byline terms.                                                            |
+| `includes/bylines-inspector-sidebar-panel/` | Editor panel for managing bylines on posts.                                                                       |
+| `includes/staff-inspector-sidebar-panel/`   | Editor panel for managing staff-specific meta on `staff` posts.                                                   |
+| `src/bylines-query/`                        | Block: `prc-block/bylines-query`.                                                                                 |
+| `src/bylines-display/`                      | Block: `prc-block/bylines-display`.                                                                               |
+| `src/staff-context-provider/`               | Block: `prc-block/staff-context-provider`.                                                                        |
+| `src/staff-query/`                          | Block: `prc-block/staff-query`.                                                                                   |
+| `src/staff-info/`                           | Block: `prc-block/staff-info`.                                                                                    |
 
 ## Dependencies
 
 - `prc-platform-core` (required plugin) — provides `prc_platform_on_publish`, platform utility functions, and script-loading helpers.
-- Term Data Store (TDS) — used to create and maintain the `staff` post ↔ `bylines` term relationship.
+- `[prc/term-data-store](https://github.com/pewresearch/term-data-store)` (`PRC\TDS` namespace) — used to create and maintain the `staff` post ↔ `bylines` term relationship.
 - Yoast SEO — SEO class hooks are conditional on Yoast being active.
 
 ## Development
@@ -223,8 +224,9 @@ npm run build -w @prc/staff-bylines
 # Watch mode
 npm run start -w @prc/staff-bylines
 
-# Run Playwright e2e tests (requires wp-env)
-npm run test -w @prc/staff-bylines
+# Run Playwright e2e tests (from monorepo root; wp-env + Playwright are centralized)
+npm run env:start
+npm test -- tests/prc-staff-bylines/
 ```
 
-Tests live in `tests/` and cover content-type registration, REST API, staff meta fields, byline sync, and editor integration.
+Specs live at `tests/prc-staff-bylines/` (at the monorepo root) and cover content-type registration, REST API, staff meta fields, byline sync, and editor integration.

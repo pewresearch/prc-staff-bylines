@@ -9,7 +9,7 @@ import styled from '@emotion/styled';
  * WordPress Dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { Fragment } from '@wordpress/element';
+import { useCallback } from '@wordpress/element';
 import { FormToggle, PanelRow } from '@wordpress/components';
 
 /**
@@ -42,19 +42,25 @@ function Bylines() {
 		toggleBylinesDisplay,
 	} = useBylines();
 
+	const handleSelectByline = useCallback(
+		(entity) => {
+			append(randomId(), entity.entityId, true);
+		},
+		[append]
+	);
+
 	return (
-		<Fragment>
+		<>
 			<PanelRow>
 				<SearchContainer>
 					<WPEntitySearch
 						placeholder={__('Add new byline…', 'prc-platform-core')}
 						entityType="taxonomy"
 						entitySubType="bylines"
-						onSelect={(entity) => {
-							append(randomId(), entity.entityId, true);
-						}}
+						onSelect={handleSelectByline}
 						clearOnSelect={true}
 						showType={false}
+						showUrl={false}
 					>
 						<ListWrapper>
 							<List
@@ -86,15 +92,16 @@ function Bylines() {
 				</SearchContainer>
 			</PanelRow>
 			<PanelRow>
-				<label>Display Bylines</label>
+				<label htmlFor="display-bylines">Display Bylines</label>
 				<FormToggle
+					id="display-bylines"
 					checked={displayBylines}
 					onChange={() => {
 						toggleBylinesDisplay();
 					}}
 				/>
 			</PanelRow>
-		</Fragment>
+		</>
 	);
 }
 

@@ -44,14 +44,22 @@ class Bylines_Display {
 	 */
 	public function render_callback( array $attributes, string $content, object $block ): string {
 		if ( isset( $block->context['postId'] ) ) {
-			$object_id = $block->context['postId'];
+			$object_id = (int) $block->context['postId'];
 		} else {
-			$object_id = get_the_ID();
+			$maybe_id  = get_the_ID();
+			$object_id = $maybe_id ? (int) $maybe_id : 0;
+			if ( $object_id <= 0 && isset( $GLOBALS['post'] ) && $GLOBALS['post'] instanceof \WP_Post ) {
+				$object_id = (int) $GLOBALS['post']->ID;
+			}
+		}
+
+		if ( $object_id <= 0 ) {
+			return '';
 		}
 
 		$block_wrapper_attrs = get_block_wrapper_attributes();
 		$prefix              = isset( $attributes['prefix'] ) ? $attributes['prefix'] : 'By';
-		$bylines             = new Bylines( (int) $object_id );
+		$bylines             = new Bylines( $object_id );
 		if ( is_wp_error( $bylines->bylines ) ) {
 			return '';
 		}

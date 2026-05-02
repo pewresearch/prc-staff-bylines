@@ -9,7 +9,7 @@ declare(strict_types=1);
 namespace PRC\Platform\Staff_Bylines;
 
 use WP_Error;
-use TDS;
+use function PRC\TDS\get_related_term;
 
 /**
  * This is the primary means of accessing a unified Staff member. Combining both term and post type.
@@ -190,7 +190,7 @@ class Staff {
 			return false;
 		}
 
-		$term = TDS\get_related_term( $staff_post_id );
+		$term = get_related_term( $staff_post_id );
 		if ( ! is_a( $term, 'WP_Term' ) ) {
 			return false;
 		}

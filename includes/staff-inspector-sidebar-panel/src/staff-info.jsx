@@ -4,7 +4,12 @@
 import { __ } from '@wordpress/i18n';
 import { useSelect } from '@wordpress/data';
 import { useEntityProp } from '@wordpress/core-data';
-import { CardDivider, ToggleControl, TextControl } from '@wordpress/components';
+import {
+	CardDivider,
+	ToggleControl,
+	TextControl,
+	__experimentalVStack as VStack,
+} from '@wordpress/components';
 import { PluginDocumentSettingPanel } from '@wordpress/editor';
 
 export default function StaffInfoPanel() {
@@ -25,42 +30,43 @@ export default function StaffInfoPanel() {
 			name="prc-staff-info"
 			title="Staff Information"
 		>
-			<ToggleControl
-				label={__('Display Byline Link')}
-				help={__(
-					'All staff are assigned a byline tem, however not all staff have a link to a byline archive "staff bio" page. If this staff member has a bio page, enable this option to link their byline to their bio page.'
-				)}
-				checked={bylineLinkEnabled}
-				onChange={() => {
-					setMeta({
-						...meta,
-						bylineLinkEnabled: !bylineLinkEnabled,
-					});
-				}}
-			/>
-			<CardDivider />
-			<TextControl
-				label={__('Job Title')}
-				value={jobTitle}
-				onChange={(value) => {
-					setMeta({ ...meta, jobTitle: value });
-				}}
-				placeholder="Research Assistant"
-			/>
-			<TextControl
-				label={__('Job Title Extended')}
-				help={__(
-					'This extended job title appears under Short Read posts.'
-				)}
-				value={jobTitleExtended}
-				onChange={(value) => {
-					setMeta({
-						...meta,
-						jobTitleExtended: value,
-					});
-				}}
-				placeholder="is a Research Assistant at Pew Research Center."
-			/>
+			<VStack spacing="2">
+				<ToggleControl
+					label={__('Display Byline Link')}
+					help={__(
+						'All staff are assigned a byline tem, however not all staff have a link to a byline archive "staff bio" page. If this staff member has a bio page, enable this option to link their byline to their bio page.'
+					)}
+					checked={bylineLinkEnabled}
+					onChange={() => {
+						setMeta({
+							...meta,
+							bylineLinkEnabled: !bylineLinkEnabled,
+						});
+					}}
+				/>
+				<TextControl
+					label={__('Job Title')}
+					value={jobTitle}
+					onChange={(value) => {
+						setMeta({ ...meta, jobTitle: value });
+					}}
+					placeholder="Research Assistant"
+				/>
+				<TextControl
+					label={__('Job Title Extended')}
+					help={__(
+						'This extended job title appears under Short Read posts.'
+					)}
+					value={jobTitleExtended}
+					onChange={(value) => {
+						setMeta({
+							...meta,
+							jobTitleExtended: value,
+						});
+					}}
+					placeholder="is a Research Assistant at Pew Research Center."
+				/>
+			</VStack>
 		</PluginDocumentSettingPanel>
 	);
 }

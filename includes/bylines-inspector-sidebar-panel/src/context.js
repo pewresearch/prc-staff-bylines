@@ -4,35 +4,142 @@
  * WordPress Dependencies
  */
 import {
-	useState,
 	useContext,
 	createContext,
-	useEffect,
+	useRef,
+	useCallback,
 } from '@wordpress/element';
 import { useSelect, useDispatch } from '@wordpress/data';
-import { useEntityProp } from '@wordpress/core-data';
 
 const bylinesContext = createContext();
 
 const useProvideBylines = () => {
-	const { postType } = useSelect(
-		(select) => ({
-			postType: select('core/editor').getCurrentPostType(),
-		}),
-		[]
-	);
 	const { editPost } = useDispatch('core/editor');
 
-	const [bylineItems, setBylines] = useState([]);
-	const [acknowledgementItems, setAcknowledgements] = useState([]);
-	const [isLoaded, toggleIsLoaded] = useState(false);
+	const bylinesOrdered = useSelect(
+		(select) =>
+			select('core/editor').getEditedPostAttribute('bylinesOrdered'),
+		[]
+	);
+	const acknowledgementsOrdered = useSelect(
+		(select) =>
+			select('core/editor').getEditedPostAttribute(
+				'acknowledgementsOrdered'
+			),
+		[]
+	);
+	const rawMeta = useSelect(
+		(select) => select('core/editor').getEditedPostAttribute('meta'),
+		[]
+	);
+	const meta = rawMeta ?? {};
 
-	const [meta, setMeta] = useEntityProp('postType', postType, 'meta');
-	if (undefined === meta) {
+	const bylinesRef = useRef(bylinesOrdered);
+	bylinesRef.current = bylinesOrdered;
+	const acksRef = useRef(acknowledgementsOrdered);
+	acksRef.current = acknowledgementsOrdered;
+	const metaRef = useRef(meta);
+	metaRef.current = meta;
+
+	const reorder = useCallback(
+		(oldIndex, newIndex, isBylines = true) => {
+			const currentBylines = Array.isArray(bylinesRef.current)
+				? [...bylinesRef.current]
+				: [];
+			const currentAcks = Array.isArray(acksRef.current)
+				? [...acksRef.current]
+				: [];
+			const source = isBylines ? currentBylines : currentAcks;
+			const item = source[oldIndex];
+			source.splice(oldIndex, 1);
+			source.splice(newIndex, 0, item);
+
+			if (isBylines) {
+				editPost({ bylinesOrdered: source });
+			} else {
+				editPost({ acknowledgementsOrdered: source });
+			}
+		},
+		[editPost]
+	);
+
+	const append = useCallback(
+		(key, termId, isBylines = true) => {
+			const currentBylines = Array.isArray(bylinesRef.current)
+				? [...bylinesRef.current]
+				: [];
+			const currentAcks = Array.isArray(acksRef.current)
+				? [...acksRef.current]
+				: [];
+			if (isBylines) {
+				const next = [...currentBylines, { key, termId }];
+				editPost({ bylinesOrdered: next });
+			} else {
+				const next = [...currentAcks, { key, termId }];
+				editPost({ acknowledgementsOrdered: next });
+			}
+		},
+		[editPost]
+	);
+
+	const remove = useCallback(
+		(index, isBylines = true) => {
+			const currentBylines = Array.isArray(bylinesRef.current)
+				? [...bylinesRef.current]
+				: [];
+			const currentAcks = Array.isArray(acksRef.current)
+				? [...acksRef.current]
+				: [];
+			if (isBylines) {
+				const next = [...currentBylines];
+				next.splice(index, 1);
+				editPost({ bylinesOrdered: next });
+			} else {
+				const next = [...currentAcks];
+				next.splice(index, 1);
+				editPost({ acknowledgementsOrdered: next });
+			}
+		},
+		[editPost]
+	);
+
+	const updateItem = useCallback(
+		(index, key, value, isBylines = true) => {
+			const currentBylines = Array.isArray(bylinesRef.current)
+				? [...bylinesRef.current]
+				: [];
+			const currentAcks = Array.isArray(acksRef.current)
+				? [...acksRef.current]
+				: [];
+			if (isBylines) {
+				const next = [...currentBylines];
+				next[index] = { ...next[index], [key]: value };
+				editPost({ bylinesOrdered: next });
+			} else {
+				const next = [...currentAcks];
+				next[index] = { ...next[index], [key]: value };
+				editPost({ acknowledgementsOrdered: next });
+			}
+		},
+		[editPost]
+	);
+
+	const toggleBylinesDisplay = useCallback(() => {
+		const m = metaRef.current || {};
+		const current = m.displayBylines ?? true;
+		editPost({
+			meta: {
+				...m,
+				displayBylines: !current,
+			},
+		});
+	}, [editPost]);
+
+	if (undefined === rawMeta) {
+		// eslint-disable-next-line no-console -- warn developers when meta cannot be loaded
 		console.warn(
-			'Bylines will not work correctly until meta can be loaded, ensure this post type supports `custom-fields`.'
+			'Bylines will not work correctly until post meta can be loaded, ensure this post type supports `custom-fields`.'
 		);
-		// Bail early if no meta
 		return {
 			displayBylines: false,
 			bylineItems: [],
@@ -45,95 +152,12 @@ const useProvideBylines = () => {
 		};
 	}
 
-	const { bylines, acknowledgements, displayBylines } = meta;
+	const displayBylines = meta.displayBylines ?? true;
+	const bylineItems = Array.isArray(bylinesOrdered) ? bylinesOrdered : [];
+	const acknowledgementItems = Array.isArray(acknowledgementsOrdered)
+		? acknowledgementsOrdered
+		: [];
 
-	const reorder = (oldIndex, newIndex, isBylines = true) => {
-		const newItems = isBylines
-			? [...bylineItems]
-			: [...acknowledgementItems];
-		const item = newItems[oldIndex];
-		newItems.splice(oldIndex, 1);
-		newItems.splice(newIndex, 0, item);
-		if (isBylines) {
-			setBylines(newItems);
-		} else {
-			setAcknowledgements(newItems);
-		}
-	};
-
-	const append = (key, termId, isBylines = true) => {
-		const newItems = isBylines
-			? [...bylineItems]
-			: [...acknowledgementItems];
-		newItems.push({ key, termId });
-		if (isBylines) {
-			setBylines(newItems);
-		} else {
-			setAcknowledgements(newItems);
-		}
-	};
-
-	const remove = (index, isBylines = true) => {
-		const newItems = isBylines
-			? [...bylineItems]
-			: [...acknowledgementItems];
-		newItems.splice(index, 1);
-		if (isBylines) {
-			setBylines(newItems);
-		} else {
-			setAcknowledgements(newItems);
-		}
-	};
-
-	const updateItem = (index, key, value, isBylines = true) => {
-		const newItems = isBylines
-			? [...bylineItems]
-			: [...acknowledgementItems];
-		newItems[index][key] = value;
-		if (isBylines) {
-			setBylines(newItems);
-		} else {
-			setAcknowledgements(newItems);
-		}
-	};
-
-	const toggleBylinesDisplay = () => {
-		setMeta({ displayBylines: !displayBylines });
-	};
-
-	useEffect(() => {
-		if (!isLoaded) {
-			console.log('initializing bylines...', meta);
-			if (Array.isArray(bylines)) {
-				setBylines([...bylines]);
-			}
-			// check if acknowledgements is an array, if not, set it to an empty array
-			if (Array.isArray(acknowledgements)) {
-				setAcknowledgements([...acknowledgements]);
-			}
-			toggleIsLoaded(true);
-		}
-	}, [bylines, acknowledgements, isLoaded]);
-
-	useEffect(() => {
-		if (isLoaded) {
-			console.log('Meta Save', [bylineItems, acknowledgementItems]);
-			const newMetaUpdates = {
-				bylines: bylineItems,
-			};
-			if (Array.isArray(acknowledgementItems)) {
-				newMetaUpdates.acknowledgements = acknowledgementItems;
-			}
-			setMeta(newMetaUpdates);
-			// get array of term ids from bylines and acknowledgements
-			const termIds = [...bylineItems, ...acknowledgementItems].map(
-				(b) => b.termId
-			);
-			editPost({ bylines: termIds });
-		}
-	}, [isLoaded, bylineItems, acknowledgementItems]);
-
-	// Return the user object and auth methods
 	return {
 		displayBylines,
 		bylineItems,

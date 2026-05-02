@@ -19,7 +19,7 @@
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       prc-staff-bylines
- * Requires Plugins:  prc-platform-core
+ * Requires Plugins:  prc-scripts, prc-post-publish-pipeline
  */
 
 declare(strict_types=1);
@@ -33,6 +33,19 @@ if ( ! defined( 'WPINC' ) ) {
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+
+if ( ! defined( 'DEFAULT_TECHNICAL_CONTACT' ) ) {
+	define( 'DEFAULT_TECHNICAL_CONTACT', 'webdev@pewresearch.org' );
+}
+
+// Load the Jetpack Autoloader so runtime version-selection can pick the
+// highest version across all plugins that ship the same library dep
+// (matches the prc-platform-core pattern).
+$prc_staff_bylines_autoloader = __DIR__ . '/vendor/autoload_packages.php';
+if ( file_exists( $prc_staff_bylines_autoloader ) ) {
+	require_once $prc_staff_bylines_autoloader;
+}
+unset( $prc_staff_bylines_autoloader );
 
 define( 'PRC_STAFF_BYLINES_FILE', __FILE__ );
 define( 'PRC_STAFF_BYLINES_DIR', __DIR__ );

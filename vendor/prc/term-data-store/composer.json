@@ -1,0 +1,55 @@
+{
+  "name": "prc/term-data-store",
+  "version": "1.0.0",
+  "description": "One-to-one synced relationships between WordPress custom post types and taxonomy terms. Forked from 10up/term-data-store with stronger ID-based meta linking, hierarchical-term fixes, and optional permalink rewrites.",
+  "type": "library",
+  "license": "GPL-2.0-or-later",
+  "authors": [
+    {
+      "name": "Seth Rubenstein",
+      "email": "srubenstein@pewresearch.org",
+      "homepage": "https://pewresearch.org",
+      "role": "Maintainer"
+    },
+    {
+      "name": "John P Bloch",
+      "email": "john.bloch@10up.com",
+      "role": "Original author"
+    }
+  ],
+  "require": {
+    "php": ">=8.2"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.6",
+    "yoast/phpunit-polyfills": "^1.1",
+    "wp-phpunit/wp-phpunit": "^6.4"
+  },
+  "autoload": {
+    "files": [
+      "term-data-store.php"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "PRC\\TDS\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit",
+    "test:unit": "phpunit --testsuite unit",
+    "test:integration": "phpunit --testsuite integration"
+  },
+  "config": {
+    "sort-packages": true,
+    "platform": {
+      "php": "8.4.0"
+    }
+  },
+  "minimum-stability": "stable",
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.x-dev"
+    }
+  }
+}

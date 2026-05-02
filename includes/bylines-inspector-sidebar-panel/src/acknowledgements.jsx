@@ -9,7 +9,11 @@ import styled from '@emotion/styled';
  * WordPress Dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { CardDivider, PanelRow } from '@wordpress/components';
+import { useCallback } from '@wordpress/element';
+import {
+	__experimentalVStack as VStack,
+	PanelRow,
+} from '@wordpress/components';
 
 /**
  * Internal Dependencies
@@ -33,13 +37,20 @@ const ListWrapper = styled.div`
 
 function Acknowledgements() {
 	const { acknowledgementItems, reorder, remove, append } = useBylines();
+
+	const handleSelectAcknowledgement = useCallback(
+		(entity) => {
+			append(randomId(), entity.entityId, false);
+		},
+		[append]
+	);
+
 	return (
 		<PanelRow>
-			<div>
-				<CardDivider />
+			<VStack spacing="2">
 				<p>
 					{__(
-						`Acknowledgements will not appear on the post. People associated here will have this post listed on their staff bio page.`,
+						`Acknowledgements never appear directly on the post. Staff associated with this post will have this post listed on their staff bio page.`,
 						'prc-platform-core'
 					)}
 				</p>
@@ -48,10 +59,10 @@ function Acknowledgements() {
 						placeholder="Add new acknowledgement..."
 						entityType="taxonomy"
 						entitySubType="bylines"
-						onSelect={(entity) => {
-							append(randomId(), entity.entityId, false);
-						}}
+						onSelect={handleSelectAcknowledgement}
 						clearOnSelect={true}
+						showUrl={false}
+						showType={false}
 					>
 						<ListWrapper>
 							<List
@@ -82,7 +93,7 @@ function Acknowledgements() {
 						</ListWrapper>
 					</WPEntitySearch>
 				</SearchContainer>
-			</div>
+			</VStack>
 		</PanelRow>
 	);
 }
