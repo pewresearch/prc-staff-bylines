@@ -38,14 +38,15 @@ if ( ! defined( 'DEFAULT_TECHNICAL_CONTACT' ) ) {
 	define( 'DEFAULT_TECHNICAL_CONTACT', 'webdev@pewresearch.org' );
 }
 
-// Load the Jetpack Autoloader so runtime version-selection can pick the
-// highest version across all plugins that ship the same library dep
-// (matches the prc-platform-core pattern).
-$prc_staff_bylines_autoloader = __DIR__ . '/vendor/autoload_packages.php';
-if ( file_exists( $prc_staff_bylines_autoloader ) ) {
-	require_once $prc_staff_bylines_autoloader;
+// When running inside the PRC Platform monorepo the root autoloader already
+// provides every dependency; skip per-plugin Jetpack Autoloader initialization.
+if ( ! defined( 'PRC_PLATFORM' ) ) {
+	$prc_staff_bylines_autoloader = __DIR__ . '/vendor/autoload_packages.php';
+	if ( file_exists( $prc_staff_bylines_autoloader ) ) {
+		require_once $prc_staff_bylines_autoloader;
+	}
+	unset( $prc_staff_bylines_autoloader );
 }
-unset( $prc_staff_bylines_autoloader );
 
 define( 'PRC_STAFF_BYLINES_FILE', __FILE__ );
 define( 'PRC_STAFF_BYLINES_DIR', __DIR__ );
