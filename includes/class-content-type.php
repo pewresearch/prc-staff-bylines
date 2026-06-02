@@ -426,15 +426,16 @@ class Content_Type {
 
 		// Register bylines, acknowledgements, and displayBylines toggle meta for posts.
 		foreach ( $enabled_post_types as $post_type ) {
+			// `show_in_rest` is intentionally omitted for bylines/acknowledgements. The editor
+			// reads and writes `bylinesOrdered` / `acknowledgementsOrdered` REST fields (see
+			// REST_API::register_ordered_bylines_rest_fields). Exposing the same data via
+			// meta in REST caused stale meta.bylines payloads to overwrite ordered rows on save.
 			register_post_meta(
 				$post_type,
 				'bylines',
 				array(
 					'single'            => true,
 					'type'              => 'array',
-					'show_in_rest'      => array(
-						'schema' => self::$field_schema,
-					),
 					'revisions_enabled' => true,
 					'auth_callback'     => function () {
 						return current_user_can( 'edit_posts' );
@@ -448,9 +449,6 @@ class Content_Type {
 				array(
 					'single'            => true,
 					'type'              => 'array',
-					'show_in_rest'      => array(
-						'schema' => self::$field_schema,
-					),
 					'revisions_enabled' => true,
 					'auth_callback'     => function () {
 						return current_user_can( 'edit_posts' );

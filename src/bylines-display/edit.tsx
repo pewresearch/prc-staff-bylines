@@ -48,9 +48,9 @@ export default function Edit({
 	const { prefix, className } = attributes;
 
 	const [bylines, setBylines] = useState<string[]>(DEFAULT_BYLINES);
-	const bylineTerms = useSelect(
+	const bylineRows = useSelect(
 		(select: any) =>
-			select('core/editor').getEditedPostAttribute('bylines'),
+			select('core/editor').getEditedPostAttribute('bylinesOrdered'),
 		[]
 	);
 	const blockProps = useBlockProps({
@@ -62,24 +62,35 @@ export default function Edit({
 			new Promise((resolve) => {
 				apiFetch({
 					path: `/wp/v2/bylines/${termId}`,
-				}).then((byline: any) => {
-					const { name } = byline;
-					return resolve(name);
-				});
+				})
+					.then((byline: any) => {
+						const { name } = byline;
+						return resolve(name);
+					})
+					.catch(() => {
+						resolve('');
+					});
 			});
 
-		if (bylineTerms && 0 < bylineTerms.length) {
+		const termIds = Array.isArray(bylineRows)
+			? bylineRows
+					.map((row: { termId?: number }) => Number(row?.termId))
+					.filter(
+						(termId: number) =>
+							Number.isFinite(termId) && termId > 0
+					)
+			: [];
+
+		if (termIds.length > 0) {
 			Promise.all(
-				bylineTerms.map((termId: number) =>
-					getBylineNameAsync(termId)
-				)
+				termIds.map((termId: number) => getBylineNameAsync(termId))
 			).then((data) => {
-				setBylines([...data]);
+				setBylines(data.filter((name) => name !== ''));
 			});
 		} else {
 			setBylines([...DEFAULT_BYLINES]);
 		}
-	}, [bylineTerms]);
+	}, [bylineRows]);
 
 	return (
 		<div {...blockProps}>

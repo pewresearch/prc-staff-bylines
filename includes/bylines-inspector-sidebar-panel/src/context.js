@@ -127,9 +127,9 @@ const useProvideBylines = () => {
 	const toggleBylinesDisplay = useCallback(() => {
 		const m = metaRef.current || {};
 		const current = m.displayBylines ?? true;
+		// Only patch displayBylines — spreading full meta reintroduces stale bylines/acks rows.
 		editPost({
 			meta: {
-				...m,
 				displayBylines: !current,
 			},
 		});
