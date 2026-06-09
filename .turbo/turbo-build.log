@@ -1,60 +1,60 @@
 
-> @prc/staff-bylines@1.2.0 build
+> @prc/staff-bylines@1.1.0 build
 > wp-scripts build --webpack-copy-php --experimental-modules && wp-scripts build-blocks-manifest && wp-scripts build --source-path=includes/bylines-inspector-sidebar-panel/src --output-path=includes/bylines-inspector-sidebar-panel/build && wp-scripts build --source-path=includes/staff-inspector-sidebar-panel/src --output-path=includes/staff-inspector-sidebar-panel/build
 
-assets by path [1m[32mstaff-query/[39m[22m 33.3 KiB 8 assets
-assets by path [1m[32mbylines-query/[39m[22m 10.2 KiB 8 assets
-assets by path [1m[32mbylines-display/[39m[22m 10.5 KiB
+assets by path staff-query/ 33.3 KiB 8 assets
+assets by path bylines-query/ 10.2 KiB 8 assets
+assets by path bylines-display/ 10.5 KiB
   assets by chunk 4.93 KiB (name: bylines-display/index) 4 assets
   assets by chunk 1.15 KiB (id hint: style) 2 assets
   + 2 assets
-assets by path [1m[32mstaff-context-provider/[39m[22m 9.22 KiB
+assets by path staff-context-provider/ 9.22 KiB
   assets by chunk 3.67 KiB (name: staff-context-provider/index) 4 assets
   assets by chunk 1.48 KiB (name: staff-context-provider/style-index) 2 assets
   + 2 assets
-assets by path [1m[32mstaff-info/[39m[22m 12 KiB
-  assets by path [1m[32mstaff-info/*.php[39m[22m 7.9 KiB 2 assets
-  asset [1m[32mstaff-info/index.js[39m[22m 3.86 KiB [1m[32m[emitted][39m[22m [1m[32m[minimized][39m[22m (name: staff-info/index)
-  asset [1m[32mstaff-info/block.json[39m[22m 195 bytes [1m[32m[emitted][39m[22m [from: src/staff-info/block.json] [1m[32m[copied][39m[22m
-Entrypoint [1mbylines-display/index[39m[22m 6.08 KiB = 6 assets
-Entrypoint [1mbylines-query/index[39m[22m 5.36 KiB = 6 assets
-Entrypoint [1mstaff-context-provider/index[39m[22m 5.16 KiB = 6 assets
-Entrypoint [1mstaff-info/index[39m[22m 3.96 KiB = [1m[32mstaff-info/index.js[39m[22m 3.86 KiB [1m[32mstaff-info/index.asset.php[39m[22m 95 bytes
-Entrypoint [1mstaff-query/index[39m[22m 27.3 KiB = 6 assets
-orphan modules 115 KiB (javascript) 7.32 KiB (runtime) [1m[33m[orphan][39m[22m 110 modules
+assets by path staff-info/ 12 KiB
+  assets by path staff-info/*.php 7.9 KiB 2 assets
+  asset staff-info/index.js 3.86 KiB [emitted] [minimized] (name: staff-info/index)
+  asset staff-info/block.json 195 bytes [emitted] [from: src/staff-info/block.json] [copied]
+Entrypoint bylines-display/index 6.08 KiB = 6 assets
+Entrypoint bylines-query/index 5.36 KiB = 6 assets
+Entrypoint staff-context-provider/index 5.16 KiB = 6 assets
+Entrypoint staff-info/index 3.96 KiB = staff-info/index.js 3.86 KiB staff-info/index.asset.php 95 bytes
+Entrypoint staff-query/index 27.3 KiB = 6 assets
+orphan modules 115 KiB (javascript) 7.32 KiB (runtime) [orphan] 110 modules
 runtime modules 11.7 KiB 18 modules
-built modules 2.48 KiB (css/mini-extract) 98.1 KiB (javascript) [1m[33m[built][39m[22m
+built modules 2.48 KiB (css/mini-extract) 98.1 KiB (javascript) [built]
   cacheable modules 2.48 KiB
-    modules by path [1m./src/bylines-display/[39m[22m 872 bytes 2 modules
-    modules by path [1m./src/bylines-query/[39m[22m 143 bytes 2 modules
-    modules by path [1m./src/staff-context-provider/[39m[22m 843 bytes 2 modules
-    modules by path [1m./src/staff-query/[39m[22m 678 bytes 2 modules
+    modules by path ./src/bylines-display/ 872 bytes 2 modules
+    modules by path ./src/bylines-query/ 143 bytes 2 modules
+    modules by path ./src/staff-context-provider/ 843 bytes 2 modules
+    modules by path ./src/staff-query/ 678 bytes 2 modules
   javascript modules 98.1 KiB
-    [1m./src/bylines-display/index.ts + 12 modules[39m[22m 6.68 KiB [1m[31m[not cacheable][39m[22m [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
-    [1m./src/bylines-query/index.ts + 13 modules[39m[22m 7.79 KiB [1m[31m[not cacheable][39m[22m [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
-    [1m./src/staff-context-provider/index.ts + 12 modules[39m[22m 6.17 KiB [1m[31m[not cacheable][39m[22m [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
-    [1m./src/staff-info/index.ts + 1 modules[39m[22m 5.6 KiB [1m[31m[not cacheable][39m[22m [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
-    [1m./src/staff-query/index.ts + 36 modules[39m[22m 71.9 KiB [1m[31m[not cacheable][39m[22m [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
-webpack 5.106.2 compiled [1m[32msuccessfully[39m[22m in 14086 ms
+    ./src/bylines-display/index.ts + 12 modules 6.68 KiB [not cacheable] [built] [code generated]
+    ./src/bylines-query/index.ts + 13 modules 7.79 KiB [not cacheable] [built] [code generated]
+    ./src/staff-context-provider/index.ts + 12 modules 6.17 KiB [not cacheable] [built] [code generated]
+    ./src/staff-info/index.ts + 1 modules 5.6 KiB [not cacheable] [built] [code generated]
+    ./src/staff-query/index.ts + 36 modules 71.9 KiB [not cacheable] [built] [code generated]
+webpack 5.106.2 compiled successfully in 2366 ms
 
-webpack 5.106.2 compiled [1m[32msuccessfully[39m[22m in 246 ms
+webpack 5.106.2 compiled successfully in 15 ms
 Block metadata PHP file generated at: build/blocks-manifest.php
 assets by chunk 40.3 KiB (name: index)
-  asset [1m[32mindex.js[39m[22m 40 KiB [1m[32m[emitted][39m[22m [1m[32m[minimized][39m[22m (name: index)
-  asset [1m[32mindex.asset.php[39m[22m 268 bytes [1m[32m[emitted][39m[22m (name: index)
-assets by path [1m[32m./*.css[39m[22m 146 bytes
-  asset [1m[32m./style-index-rtl.css[39m[22m 73 bytes [1m[32m[emitted][39m[22m (name: ./style-index) (id hint: style)
-  asset [1m[32m./style-index.css[39m[22m 73 bytes [1m[32m[emitted][39m[22m (name: ./style-index) (id hint: style)
-Entrypoint [1mindex[39m[22m 40.4 KiB = [1m[32m./style-index.css[39m[22m 73 bytes [1m[32m./style-index-rtl.css[39m[22m 73 bytes [1m[32mindex.js[39m[22m 40 KiB [1m[32mindex.asset.php[39m[22m 268 bytes
-orphan modules 335 KiB (javascript) 937 bytes (runtime) [1m[33m[orphan][39m[22m 370 modules
+  asset index.js 40 KiB [emitted] [minimized] (name: index)
+  asset index.asset.php 268 bytes [emitted] (name: index)
+assets by path ./*.css 146 bytes
+  asset ./style-index-rtl.css 73 bytes [emitted] (name: ./style-index) (id hint: style)
+  asset ./style-index.css 73 bytes [emitted] (name: ./style-index) (id hint: style)
+Entrypoint index 40.4 KiB = ./style-index.css 73 bytes ./style-index-rtl.css 73 bytes index.js 40 KiB index.asset.php 268 bytes
+orphan modules 335 KiB (javascript) 937 bytes (runtime) [orphan] 370 modules
 runtime modules 2.51 KiB 3 modules
-built modules 105 KiB (javascript) 72 bytes (css/mini-extract) [1m[33m[built][39m[22m
-  [1m./includes/bylines-inspector-sidebar-panel/src/index.jsx + 40 modules[39m[22m 105 KiB [1m[31m[not cacheable][39m[22m [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
-  css ../../node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[3].use[1]!../../node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[3].use[2]!../../node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[3].use[3]![1m./includes/bylines-inspector-sidebar-panel/src/style.scss[39m[22m 72 bytes [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
-webpack 5.106.2 compiled [1m[32msuccessfully[39m[22m in 8125 ms
-asset [1m[32mindex.js[39m[22m 2.75 KiB [1m[32m[emitted][39m[22m [1m[32m[minimized][39m[22m (name: index)
-asset [1m[32mindex.asset.php[39m[22m 217 bytes [1m[32m[emitted][39m[22m (name: index)
-Entrypoint [1mindex[39m[22m 2.96 KiB = [1m[32mindex.js[39m[22m 2.75 KiB [1m[32mindex.asset.php[39m[22m 217 bytes
-orphan modules 5.6 KiB [1m[33m[orphan][39m[22m 12 modules
-[1m./includes/staff-inspector-sidebar-panel/src/index.jsx + 12 modules[39m[22m 6.17 KiB [1m[31m[not cacheable][39m[22m [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
-webpack 5.106.2 compiled [1m[32msuccessfully[39m[22m in 1311 ms
+built modules 105 KiB (javascript) 72 bytes (css/mini-extract) [built]
+  ./includes/bylines-inspector-sidebar-panel/src/index.jsx + 40 modules 105 KiB [not cacheable] [built] [code generated]
+  css ../../node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[3].use[1]!../../node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[3].use[2]!../../node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[3].use[3]!./includes/bylines-inspector-sidebar-panel/src/style.scss 72 bytes [built] [code generated]
+webpack 5.106.2 compiled successfully in 2591 ms
+asset index.js 2.75 KiB [emitted] [minimized] (name: index)
+asset index.asset.php 217 bytes [emitted] (name: index)
+Entrypoint index 2.96 KiB = index.js 2.75 KiB index.asset.php 217 bytes
+orphan modules 5.6 KiB [orphan] 12 modules
+./includes/staff-inspector-sidebar-panel/src/index.jsx + 12 modules 6.17 KiB [not cacheable] [built] [code generated]
+webpack 5.106.2 compiled successfully in 774 ms
