@@ -35,9 +35,9 @@ built modules 2.48 KiB (css/mini-extract) 98.1 KiB (javascript) [1m[33m[built]
     [1m./src/staff-context-provider/index.ts + 12 modules[39m[22m 6.17 KiB [1m[31m[not cacheable][39m[22m [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
     [1m./src/staff-info/index.ts + 1 modules[39m[22m 5.6 KiB [1m[31m[not cacheable][39m[22m [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
     [1m./src/staff-query/index.ts + 36 modules[39m[22m 71.9 KiB [1m[31m[not cacheable][39m[22m [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
-webpack 5.106.2 compiled [1m[32msuccessfully[39m[22m in 2792 ms
+webpack 5.106.2 compiled [1m[32msuccessfully[39m[22m in 17239 ms
 
-webpack 5.106.2 compiled [1m[32msuccessfully[39m[22m in 34 ms
+webpack 5.106.2 compiled [1m[32msuccessfully[39m[22m in 288 ms
 Block metadata PHP file generated at: build/blocks-manifest.php
 assets by chunk 40.3 KiB (name: index)
   asset [1m[32mindex.js[39m[22m 40 KiB [1m[32m[emitted][39m[22m [1m[32m[minimized][39m[22m (name: index)
@@ -51,10 +51,10 @@ runtime modules 2.51 KiB 3 modules
 built modules 105 KiB (javascript) 72 bytes (css/mini-extract) [1m[33m[built][39m[22m
   [1m./includes/bylines-inspector-sidebar-panel/src/index.jsx + 40 modules[39m[22m 105 KiB [1m[31m[not cacheable][39m[22m [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
   css ../../node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[3].use[1]!../../node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[3].use[2]!../../node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[3].use[3]![1m./includes/bylines-inspector-sidebar-panel/src/style.scss[39m[22m 72 bytes [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
-webpack 5.106.2 compiled [1m[32msuccessfully[39m[22m in 3092 ms
+webpack 5.106.2 compiled [1m[32msuccessfully[39m[22m in 20015 ms
 asset [1m[32mindex.js[39m[22m 2.75 KiB [1m[32m[emitted][39m[22m [1m[32m[minimized][39m[22m (name: index)
 asset [1m[32mindex.asset.php[39m[22m 217 bytes [1m[32m[emitted][39m[22m (name: index)
 Entrypoint [1mindex[39m[22m 2.96 KiB = [1m[32mindex.js[39m[22m 2.75 KiB [1m[32mindex.asset.php[39m[22m 217 bytes
 orphan modules 5.6 KiB [1m[33m[orphan][39m[22m 12 modules
 [1m./includes/staff-inspector-sidebar-panel/src/index.jsx + 12 modules[39m[22m 6.17 KiB [1m[31m[not cacheable][39m[22m [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
-webpack 5.106.2 compiled [1m[32msuccessfully[39m[22m in 721 ms
+webpack 5.106.2 compiled [1m[32msuccessfully[39m[22m in 4854 ms
