@@ -163,7 +163,13 @@ return array(
 			),
 			'staffSlug' => array(
 				'type' => 'string'
+			),
+			'staffId' => array(
+				'type' => 'number'
 			)
+		),
+		'providesContext' => array(
+			'staffId' => 'staffId'
 		),
 		'supports' => array(
 			'anchor' => true,

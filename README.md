@@ -224,8 +224,8 @@ npm run build -w @prc/staff-bylines
 # Watch mode
 npm run start -w @prc/staff-bylines
 
-# Run Playwright e2e tests (from monorepo root; wp-env + Playwright are centralized)
-npm run env:start
+# Run Playwright e2e tests (from monorepo root; VIP dev-env + Playwright are centralized)
+npm run vip:start
 npm test -- tests/prc-staff-bylines/
 ```
 

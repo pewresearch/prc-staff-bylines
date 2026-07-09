@@ -16,7 +16,13 @@
 		},
 		"staffSlug": {
 			"type": "string"
+		},
+		"staffId": {
+			"type": "number"
 		}
+	},
+	"providesContext": {
+		"staffId": "staffId"
 	},
 	"supports": {
 		"anchor": true,

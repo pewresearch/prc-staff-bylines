@@ -6,7 +6,9 @@ import { InnerBlocksAsContextTemplate } from '@prc/components';
 /**
  * WordPress Dependencies
  */
-import { useBlockProps } from '@wordpress/block-editor';
+import { useBlockProps, Warning } from '@wordpress/block-editor';
+import { useEntityRecord } from '@wordpress/core-data';
+import { __ } from '@wordpress/i18n';
 import { Fragment, useEffect, useState, useMemo } from 'react';
 import apiFetch from '@wordpress/api-fetch';
 
@@ -18,6 +20,8 @@ import Controls from './controls';
 const ALLOWED_BLOCKS = [
 	'core/group',
 	'core/paragraph',
+	'core/heading',
+	'core/list-item',
 	'core/button',
 	'prc-block/staff-info',
 ];
@@ -26,6 +30,7 @@ interface EditProps {
 	attributes: {
 		allowedBlocks?: string[];
 		staffSlug?: string;
+		staffId?: number;
 	};
 	setAttributes: (attrs: Partial<EditProps['attributes']>) => void;
 	context: {
@@ -48,68 +53,105 @@ export default function Edit({
 	context,
 	clientId,
 }: EditProps) {
-	const { allowedBlocks, staffSlug } = attributes;
+	const { allowedBlocks, staffSlug, staffId: savedStaffId } = attributes;
 	const { postId, postType } = context;
-	const [staffId, setStaffId] = useState<number | null>(null);
+	const [staffId, setStaffId] = useState<number | null>(savedStaffId ?? null);
+	const [isFetchingStaffId, setIsFetchingStaffId] = useState(
+		!savedStaffId && !(postId && postType === 'staff')
+	);
 
 	useEffect(() => {
+		let cancelled = false;
+
 		if (postId && postType === 'staff') {
 			setStaffId(postId);
+			setIsFetchingStaffId(false);
+			return () => {
+				cancelled = true;
+			};
 		}
-		let slugToSearch = '';
-		if (staffSlug) {
-			slugToSearch = staffSlug;
-		} else {
-			slugToSearch = 'michael-dimock';
-		}
-		// If the staffSlug is set, we need to fetch the staff ID from the API.
+
+		setIsFetchingStaffId(true);
+		const slugToSearch = staffSlug || 'michael-dimock';
+
 		const fetchStaffId = async () => {
-			await apiFetch({
-				path: `/wp/v2/staff?slug=${slugToSearch}&_fields=id`,
-			})
-				.then((staff: any) => {
-					if (
-						staff &&
-						staff.length &&
-						Object.prototype.hasOwnProperty.call(staff[0], 'id')
-					) {
-						setStaffId(staff[0].id);
-					} else {
-						setStaffId(null);
-					}
-				})
-				.catch(() => {
+			try {
+				const staff = (await apiFetch({
+					path: `/wp/v2/staff?slug=${slugToSearch}&_fields=id`,
+				})) as Array<{ id?: number }>;
+
+				if (cancelled) {
+					return;
+				}
+
+				if (
+					staff?.length &&
+					Object.prototype.hasOwnProperty.call(staff[0], 'id')
+				) {
+					setStaffId(staff[0].id ?? null);
+				} else {
 					setStaffId(null);
-				});
+				}
+			} catch {
+				if (!cancelled) {
+					setStaffId(null);
+				}
+			} finally {
+				if (!cancelled) {
+					setIsFetchingStaffId(false);
+				}
+			}
 		};
 
 		fetchStaffId();
+
+		return () => {
+			cancelled = true;
+		};
 	}, [postId, postType, staffSlug]);
+
+	useEntityRecord('postType', 'staff', staffId ?? undefined);
+
+	useEffect(() => {
+		const resolvedStaffId = staffId ?? undefined;
+		if (savedStaffId !== resolvedStaffId) {
+			setAttributes({ staffId: resolvedStaffId });
+		}
+	}, [staffId, savedStaffId, setAttributes]);
 
 	const blockContexts = useMemo(() => {
 		return [
 			{
-				staffId,
+				staffId: staffId ?? undefined,
 			},
 		];
 	}, [staffId]);
 
 	const blockProps = useBlockProps();
+	const staffLookupFailed = !isFetchingStaffId && !staffId;
 
-	// To avoid flicker when switching active block contexts, a preview is rendered
-	// for each block context, but the preview for the active block context is hidden.
-	// This ensures that when it is displayed again, the cached rendering of the
-	// block preview is used, instead of having to re-render the preview from scratch.
 	return (
 		<Fragment>
 			<Controls {...{ staffId, setAttributes }} />
+			{staffLookupFailed && (
+				<Warning>
+					{__(
+						'Staff member not found. Placeholder preview is shown for bound blocks.',
+						'prc-staff-bylines'
+					)}
+				</Warning>
+			)}
 			<div {...blockProps}>
 				<InnerBlocksAsContextTemplate
 					{...{
 						clientId,
 						allowedBlocks: allowedBlocks || ALLOWED_BLOCKS,
 						blockContexts,
-						isResolving: !staffId,
+						isResolving: isFetchingStaffId,
+						loadingLabel: __(
+							'Loading staff member…',
+							'prc-staff-bylines'
+						),
 					}}
 				/>
 			</div>

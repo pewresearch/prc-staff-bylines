@@ -54,6 +54,7 @@ class Bootstrap {
 		$this->plugin_name = 'prc-staff-bylines';
 
 		$this->load_dependencies();
+		$this->define_patterns();
 		$this->init_dependencies();
 	}
 
@@ -76,6 +77,8 @@ class Bootstrap {
 
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-content-type.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-staff.php';
+		require_once plugin_dir_path( __DIR__ ) . '/includes/class-staff-field-resolver.php';
+		require_once plugin_dir_path( __DIR__ ) . '/includes/bits/class-staff-bits.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-bylines.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-seo.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-rest-api.php';
@@ -92,6 +95,33 @@ class Bootstrap {
 		wp_register_block_metadata_collection(
 			PRC_STAFF_BYLINES_DIR . '/build',
 			PRC_STAFF_BYLINES_DIR . '/build/blocks-manifest.php'
+		);
+	}
+
+	/**
+	 * Register block patterns from the plugin patterns directory.
+	 */
+	private function define_patterns(): void {
+		$this->loader->add_action( 'plugins_loaded', $this, 'register_patterns', 5 );
+	}
+
+	/**
+	 * Load staff binding companion patterns via the platform pattern loader.
+	 *
+	 * @hook plugins_loaded
+	 */
+	public function register_patterns(): void {
+		if ( ! function_exists( '\PRC\Platform\Core\Patterns\register_plugin_patterns' ) ) {
+			return;
+		}
+
+		\PRC\Platform\Core\Patterns\register_plugin_patterns(
+			'prc-staff-bylines',
+			PRC_STAFF_BYLINES_DIR . '/patterns',
+			array(
+				'category_label' => __( 'Staff Bylines', 'prc-staff-bylines' ),
+				'text_domain'    => 'prc-staff-bylines',
+			)
 		);
 	}
 
@@ -119,6 +149,8 @@ class Bootstrap {
 		new Staff_Context_Provider( $this->get_loader() );
 		new Staff_Info( $this->get_loader() );
 		new Staff_Query( $this->get_loader() );
+
+		new Bits\Staff_Bits();
 
 		$this->loader->add_action( 'admin_bar_menu', $this, 'modify_admin_bar_edit_link', 100 );
 		$this->loader->add_action( 'enqueue_block_editor_assets', $this, 'enqueue_editor_assets', 9 );
