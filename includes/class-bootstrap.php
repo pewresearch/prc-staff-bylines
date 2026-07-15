@@ -100,15 +100,21 @@ class Bootstrap {
 
 	/**
 	 * Register block patterns from the plugin patterns directory.
+	 *
+	 * Queues on init priority 8 so translated category labels run after WP 6.7+
+	 * allows just-in-time textdomain loading, and before the platform pattern
+	 * loader registers categories (init/9) and pattern files (init/10). Safe vs
+	 * CPT (init/5), block_init (init/10), meta (init/11), and rest_api_init —
+	 * register_plugin_patterns() only appends to the global queue.
 	 */
 	private function define_patterns(): void {
-		$this->loader->add_action( 'plugins_loaded', $this, 'register_patterns', 5 );
+		$this->loader->add_action( 'init', $this, 'register_patterns', 8 );
 	}
 
 	/**
 	 * Load staff binding companion patterns via the platform pattern loader.
 	 *
-	 * @hook plugins_loaded
+	 * @hook init 8
 	 */
 	public function register_patterns(): void {
 		if ( ! function_exists( '\PRC\Platform\Core\Patterns\register_plugin_patterns' ) ) {
