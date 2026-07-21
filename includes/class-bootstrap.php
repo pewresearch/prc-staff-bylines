@@ -203,31 +203,55 @@ class Bootstrap {
 	}
 
 	/**
-	 * Include a file from the plugin's includes directory.
+	 * Resolve the block source directory for the current environment.
+	 *
+	 * Local uses `src/`; all other environments use `build/` (webpack-copy-php).
+	 *
+	 * @return string Relative directory name (`src` or `build`).
+	 */
+	private function get_blocks_dir(): string {
+		return 'local' === wp_get_environment_type() ? 'src' : 'build';
+	}
+
+	/**
+	 * Include a block PHP class file.
+	 *
+	 * Runs during plugin bootstrap (before `after_setup_theme` / `init`), so this
+	 * path must not call translation functions — WP 6.7+ treats early
+	 * `__()` for this domain as `_load_textdomain_just_in_time` doing_it_wrong.
 	 *
 	 * @param string $block_file_name The block file name.
 	 * @return WP_Error|null
 	 */
 	private function include_block( string $block_file_name ): WP_Error|null {
-		$dir             = 'local' === wp_get_environment_type() ? 'src' : 'build';
-		$block_file_path = $dir . '/' . $block_file_name . '/class-' . $block_file_name . '.php';
-		if ( file_exists( plugin_dir_path( __DIR__ ) . $block_file_path ) ) {
-			require_once plugin_dir_path( __DIR__ ) . $block_file_path;
-		} else {
-			do_action( 'qm/debug', 'BLOCK_MISSING: ' . $block_file_path );
-			error_log( 'BLOCK_MISSING: ' . $block_file_path );
-			return new WP_Error( 'prc_staff_bylines_block_missing', __( 'Block missing.', 'prc-staff-bylines' ) );
+		$block_file_path = $this->get_blocks_dir() . '/' . $block_file_name . '/class-' . $block_file_name . '.php';
+		$absolute_path   = plugin_dir_path( __DIR__ ) . $block_file_path;
+		if ( file_exists( $absolute_path ) ) {
+			require_once $absolute_path;
+			return null;
 		}
-		return null;
+
+		do_action( 'qm/debug', 'BLOCK_MISSING: ' . $block_file_path );
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		error_log( 'BLOCK_MISSING: ' . $block_file_path );
+
+		// Plain English: avoid __() before after_setup_theme (Sentry PRC-PLATFORM-PHP-KN).
+		return new WP_Error( 'prc_staff_bylines_block_missing', 'Block missing.' );
 	}
 
 	/**
-	 * Include all blocks from the plugin's /blocks directory.
+	 * Include all blocks from the environment-appropriate blocks directory.
+	 *
+	 * Globs the same directory used by include_block() so production never
+	 * iterates incomplete `src/` scaffolds that lack a built class file.
 	 *
 	 * @return void
 	 */
 	private function load_blocks(): void {
-		$block_files = glob( PRC_STAFF_BYLINES_DIR . '/src/*', GLOB_ONLYDIR );
+		$block_files = glob( PRC_STAFF_BYLINES_DIR . '/' . $this->get_blocks_dir() . '/*', GLOB_ONLYDIR );
+		if ( ! is_array( $block_files ) ) {
+			return;
+		}
 		foreach ( $block_files as $block ) {
 			$block  = basename( $block );
 			$loaded = $this->include_block( $block );
