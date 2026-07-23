@@ -226,7 +226,7 @@ npm run start -w @prc/staff-bylines
 
 # Run Playwright e2e tests (from monorepo root; VIP dev-env + Playwright are centralized)
 npm run vip:start
-npm test -- tests/prc-staff-bylines/
+npm test -- tests/prc-staff-bylines/e2e/
 ```
 
-Specs live at `tests/prc-staff-bylines/` (at the monorepo root) and cover content-type registration, REST API, staff meta fields, byline sync, and editor integration.
+Specs live at `tests/prc-staff-bylines/e2e/` (at the monorepo root) and cover content-type registration, REST API, staff meta fields, byline sync, and editor integration.
