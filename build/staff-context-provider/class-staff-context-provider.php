@@ -136,9 +136,9 @@ class Staff_Context_Provider {
 			return $context;
 		}
 
-		$staff_id = self::resolve_staff_id( $parent_block->attributes, $parent_block->context );
-		if ( false !== $staff_id ) {
-			$context['staffId'] = $staff_id;
+		$staff = self::resolve_staff_for_render( $parent_block->attributes, $parent_block->context );
+		if ( null !== $staff ) {
+			$context['staffId'] = $staff->ID;
 		}
 
 		return $context;
@@ -153,20 +153,9 @@ class Staff_Context_Provider {
 	 * @return string
 	 */
 	public function render_block_callback( array $attributes, string $content, WP_Block $block ): string {
-		$staff_id = self::resolve_staff_id( $attributes, $block->context );
-		$term_id  = false;
-
-		if ( false === $staff_id ) {
-			$term_id = self::resolve_byline_term_id();
-			if ( false === $term_id ) {
-				return '';
-			}
-		}
-
-		$staff = new Staff( $staff_id, $term_id );
-		// Constructors cannot return WP_Error; failed resolution leaves ID = 0.
-		if ( ! $staff->is_resolved() ) {
-			return '<!-- Staff not found -->';
+		$staff = self::resolve_staff_for_render( $attributes, $block->context );
+		if ( null === $staff ) {
+			return '';
 		}
 
 		self::$active_render_staff_id = $staff->ID;
@@ -189,6 +178,32 @@ class Staff_Context_Provider {
 			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			$content
 		);
+	}
+
+	/**
+	 * Resolve the staff member for a provider render pass.
+	 *
+	 * On bylines archives the queried term wins over attributes so a Site Editor
+	 * preview staffId cannot pin every profile to one person.
+	 *
+	 * @param array<string, mixed> $attributes   Provider block attributes.
+	 * @param array<string, mixed> $block_context Provider block context.
+	 * @return Staff|null
+	 */
+	public static function resolve_staff_for_render( array $attributes, array $block_context ): ?Staff {
+		$term_id = self::resolve_byline_term_id();
+		if ( false !== $term_id ) {
+			$staff = new Staff( false, $term_id );
+			return $staff->is_resolved() ? $staff : null;
+		}
+
+		$staff_id = self::resolve_staff_id( $attributes, $block_context );
+		if ( false === $staff_id ) {
+			return null;
+		}
+
+		$staff = new Staff( $staff_id, false );
+		return $staff->is_resolved() ? $staff : null;
 	}
 
 	/**

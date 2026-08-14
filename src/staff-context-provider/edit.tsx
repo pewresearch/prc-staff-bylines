@@ -55,15 +55,18 @@ export default function Edit({
 }: EditProps) {
 	const { allowedBlocks, staffSlug, staffId: savedStaffId } = attributes;
 	const { postId, postType } = context;
-	const [staffId, setStaffId] = useState<number | null>(savedStaffId ?? null);
+	const isStaffPost = Boolean(postId && postType === 'staff');
+	const [staffId, setStaffId] = useState<number | null>(
+		savedStaffId ?? (isStaffPost ? (postId as number) : null)
+	);
 	const [isFetchingStaffId, setIsFetchingStaffId] = useState(
-		!savedStaffId && !(postId && postType === 'staff')
+		Boolean(staffSlug) && !savedStaffId && !isStaffPost
 	);
 
 	useEffect(() => {
 		let cancelled = false;
 
-		if (postId && postType === 'staff') {
+		if (isStaffPost && postId) {
 			setStaffId(postId);
 			setIsFetchingStaffId(false);
 			return () => {
@@ -71,13 +74,20 @@ export default function Edit({
 			};
 		}
 
+		if (!staffSlug) {
+			setStaffId(null);
+			setIsFetchingStaffId(false);
+			return () => {
+				cancelled = true;
+			};
+		}
+
 		setIsFetchingStaffId(true);
-		const slugToSearch = staffSlug || 'michael-dimock';
 
 		const fetchStaffId = async () => {
 			try {
 				const staff = (await apiFetch({
-					path: `/wp/v2/staff?slug=${slugToSearch}&_fields=id`,
+					path: `/wp/v2/staff?slug=${staffSlug}&_fields=id`,
 				})) as Array<{ id?: number }>;
 
 				if (cancelled) {
@@ -108,16 +118,25 @@ export default function Edit({
 		return () => {
 			cancelled = true;
 		};
-	}, [postId, postType, staffSlug]);
+	}, [isStaffPost, postId, staffSlug]);
 
 	useEntityRecord('postType', 'staff', staffId ?? undefined);
 
+	// Persist staffId only when the inspector selected a staffSlug. Template /
+	// archive providers must not bake a preview person into attributes.
 	useEffect(() => {
+		if (!staffSlug) {
+			if (savedStaffId !== undefined) {
+				setAttributes({ staffId: undefined });
+			}
+			return;
+		}
+
 		const resolvedStaffId = staffId ?? undefined;
 		if (savedStaffId !== resolvedStaffId) {
 			setAttributes({ staffId: resolvedStaffId });
 		}
-	}, [staffId, savedStaffId, setAttributes]);
+	}, [staffId, savedStaffId, setAttributes, staffSlug]);
 
 	const blockContexts = useMemo(() => {
 		return [
@@ -128,7 +147,8 @@ export default function Edit({
 	}, [staffId]);
 
 	const blockProps = useBlockProps();
-	const staffLookupFailed = !isFetchingStaffId && !staffId;
+	const staffLookupFailed =
+		!isFetchingStaffId && !staffId && Boolean(staffSlug);
 
 	return (
 		<Fragment>
