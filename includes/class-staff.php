@@ -20,100 +20,104 @@ class Staff {
 	/**
 	 * The ID of the staff member.
 	 *
+	 * Defaults to 0 when construction cannot resolve a staff post or guest byline.
+	 * Callers must treat empty( $staff->ID ) as "not found" — constructors cannot
+	 * return WP_Error in PHP, so failed resolution leaves this sentinel.
+	 *
 	 * @var int|string
 	 */
-	public int|string $ID;
+	public int|string $ID = 0;
 
 	/**
 	 * The name of the staff member.
 	 *
 	 * @var string
 	 */
-	public string $name;
+	public string $name = '';
 
 	/**
 	 * The slug of the staff member.
 	 *
 	 * @var string
 	 */
-	public string $slug;
+	public string $slug = '';
 
 	/**
 	 * The link of the staff member.
 	 *
 	 * @var string|false
 	 */
-	public string|false $link;
+	public string|false $link = false;
 
 	/**
 	 * The user ID of the staff member.
 	 *
 	 * @var int|string|false
 	 */
-	public int|string|false $user_id;
+	public int|string|false $user_id = false;
 
 	/**
 	 * The bio of the staff member.
 	 *
 	 * @var string
 	 */
-	public string $bio;
+	public string $bio = '';
 
 	/**
 	 * The mini bio of the staff member.
 	 *
 	 * @var string
 	 */
-	public string $mini_bio;
+	public string $mini_bio = '';
 
 	/**
 	 * The job title of the staff member.
 	 *
 	 * @var string|false
 	 */
-	public string|false $job_title;
+	public string|false $job_title = false;
 
 	/**
 	 * The extended job title of the staff member.
 	 *
 	 * @var string|false
 	 */
-	public string|false $job_title_extended;
+	public string|false $job_title_extended = false;
 
 	/**
 	 * The photo of the staff member.
 	 *
 	 * @var array|false
 	 */
-	public array|false $photo;
+	public array|false $photo = false;
 
 	/**
 	 * The expertise of the staff member.
 	 *
 	 * @var array|false
 	 */
-	public array|false $expertise;
+	public array|false $expertise = false;
 
 	/**
 	 * The social profiles of the staff member.
 	 *
 	 * @var array|false
 	 */
-	public array|false $social_profiles;
+	public array|false $social_profiles = false;
 
 	/**
 	 * The WordPress user of the staff member.
 	 *
 	 * @var \WP_User|false
 	 */
-	public \WP_User|false $wp_user;
+	public \WP_User|false $wp_user = false;
 
 	/**
 	 * The slack handle of the staff member.
 	 *
 	 * @var string|false
 	 */
-	public string|false $slack_handle;
+	public string|false $slack_handle = false;
 
 	/**
 	 * Whether the staff member is currently employed.
@@ -132,29 +136,50 @@ class Staff {
 	/**
 	 * Constructor.
 	 *
+	 * On failure this leaves default property values (ID = 0). PHP constructors
+	 * cannot return WP_Error; callers must check empty( $this->ID ).
+	 *
 	 * @param int|false $post_id The post ID.
 	 * @param int|false $term_id The term ID.
 	 */
 	public function __construct( int|false $post_id = false, int|false $term_id = false ) {
-		// if post id is not false then we'll check the staff post, if term id is not false then well check the term and get the staff post id from there and then continue...
+		// Resolve staff post from byline term when only term_id is provided.
 		if ( false === $post_id && false !== $term_id && is_int( $term_id ) ) {
-			$post_id = $this->get_staff_post_id_from_term_id( $term_id );
-		}
-		if ( is_wp_error( $post_id ) && false !== $term_id && is_int( $term_id ) ) {
-			// Check that the term exists...
-			$term = get_term_by( 'id', $term_id, 'bylines' );
-			if ( ! is_a( $term, 'WP_Term' ) ) {
-				return new WP_Error( '404', 'Byline term not found, no matching term found for staff post.' );
+			$resolved = $this->get_staff_post_id_from_term_id( $term_id );
+			if ( is_wp_error( $resolved ) ) {
+				// No linked staff post — fall back to guest byline term data.
+				$term = get_term_by( 'id', $term_id, 'bylines' );
+				if ( ! is_a( $term, 'WP_Term' ) ) {
+					return;
+				}
+				$this->set_guest( $term_id );
+				return;
 			}
-			$this->set_guest( $term_id );
+			$post_id = $resolved;
+		}
+
+		if ( false === $post_id || ! is_int( $post_id ) ) {
 			return;
 		}
 
-		if ( is_wp_error( $post_id ) ) {
-			return new WP_Error( '404', 'Staff post not found, ID value not found.' );
-		}
-
 		$this->set_staff( $post_id );
+
+		// Linked staff post missing or wrong type — fall back to guest byline data.
+		if ( ! $this->is_resolved() && false !== $term_id && is_int( $term_id ) ) {
+			$term = get_term_by( 'id', $term_id, 'bylines' );
+			if ( is_a( $term, 'WP_Term' ) ) {
+				$this->set_guest( $term_id );
+			}
+		}
+	}
+
+	/**
+	 * Whether this instance resolved a staff post or guest byline.
+	 *
+	 * @return bool
+	 */
+	public function is_resolved(): bool {
+		return ! empty( $this->ID );
 	}
 
 	/**
@@ -179,7 +204,7 @@ class Staff {
 	 */
 	public function get_staff_link( int|false $staff_post_id = false ): string|false {
 		if ( false === $staff_post_id ) {
-			$staff_post_id = $this->ID;
+			$staff_post_id = ( is_int( $this->ID ) && $this->ID > 0 ) ? $this->ID : false;
 		}
 		if ( false === $staff_post_id ) {
 			return false;
@@ -209,7 +234,7 @@ class Staff {
 	 */
 	public function get_cache( int $post_id ): bool {
 		$cache = wp_cache_get( $post_id, 'staff_data' );
-		if ( false !== $cache && ! is_user_logged_in() ) {
+		if ( false !== $cache && is_array( $cache ) && array_key_exists( 'ID', $cache ) && ! is_user_logged_in() ) {
 			foreach ( $cache as $key => $value ) {
 				$this->$key = $value;
 			}
@@ -222,7 +247,7 @@ class Staff {
 	 * Set the cache.
 	 */
 	public function set_cache(): void {
-		if ( ! is_preview() ) {
+		if ( ! is_preview() && $this->is_resolved() ) {
 			wp_cache_set(
 				$this->ID,
 				get_object_vars( $this ),
@@ -242,7 +267,7 @@ class Staff {
 			return;
 		}
 		$staff_post = get_post( $post_id );
-		if ( 'staff' !== $staff_post->post_type ) {
+		if ( ! $staff_post instanceof \WP_Post || 'staff' !== $staff_post->post_type ) {
 			return;
 		}
 
@@ -277,13 +302,18 @@ class Staff {
 	 * @param int $term_id The term ID.
 	 */
 	public function set_guest( int $term_id ): void {
+		$term = get_term( $term_id );
+		if ( ! $term instanceof \WP_Term ) {
+			return;
+		}
+
 		$this->ID                    = 'guest_' . $term_id;
 		$is_guest_author             = get_post_meta( $term_id, 'is_guest_author', true );
-		$term                        = get_term( $term_id );
 		$name                        = $term->name;
 		$this->name                  = $name;
 		$this->slug                  = $term->slug;
-		$this->link                  = $is_guest_author ? get_term_link( $term_id, 'bylines' ) : false;
+		$guest_link                  = $is_guest_author ? get_term_link( $term_id, 'bylines' ) : false;
+		$this->link                  = is_string( $guest_link ) ? $guest_link : false;
 		$this->user_id               = false;
 		$this->is_currently_employed = (bool) $is_guest_author;
 		$this->bio                   = '';
@@ -306,7 +336,7 @@ class Staff {
 	 */
 	public function check_employment_status( int|false $staff_post_id = false ): bool {
 		if ( false === $staff_post_id ) {
-			$staff_post_id = $this->ID;
+			$staff_post_id = ( is_int( $this->ID ) && $this->ID > 0 ) ? $this->ID : false;
 		}
 		if ( false === $staff_post_id ) {
 			return false;
@@ -326,7 +356,7 @@ class Staff {
 	 */
 	public function get_job_title( int|false $staff_post_id = false ): string|false {
 		if ( false === $staff_post_id ) {
-			$staff_post_id = $this->ID;
+			$staff_post_id = ( is_int( $this->ID ) && $this->ID > 0 ) ? $this->ID : false;
 		}
 		if ( false === $staff_post_id ) {
 			return false;
@@ -346,7 +376,7 @@ class Staff {
 	 */
 	public function get_job_title_extended( int|false $staff_post_id = false ): string|false {
 		if ( false === $staff_post_id ) {
-			$staff_post_id = $this->ID;
+			$staff_post_id = ( is_int( $this->ID ) && $this->ID > 0 ) ? $this->ID : false;
 		}
 		if ( false === $staff_post_id ) {
 			return false;
@@ -366,7 +396,7 @@ class Staff {
 	 */
 	public function get_expertise( int|false $staff_post_id = false ): array|false {
 		if ( false === $staff_post_id ) {
-			$staff_post_id = $this->ID;
+			$staff_post_id = ( is_int( $this->ID ) && $this->ID > 0 ) ? $this->ID : false;
 		}
 		if ( false === $staff_post_id ) {
 			return false;
@@ -422,7 +452,7 @@ class Staff {
 	 */
 	public function get_social_profiles( int|false $staff_post_id = false ): array|false {
 		if ( false === $staff_post_id ) {
-			$staff_post_id = $this->ID;
+			$staff_post_id = ( is_int( $this->ID ) && $this->ID > 0 ) ? $this->ID : false;
 		}
 		if ( false === $staff_post_id ) {
 			return false;
@@ -438,7 +468,7 @@ class Staff {
 	 */
 	public function get_wp_user( int|false $staff_post_id = false ): \WP_User|false {
 		if ( false === $staff_post_id ) {
-			$staff_post_id = $this->ID;
+			$staff_post_id = ( is_int( $this->ID ) && $this->ID > 0 ) ? $this->ID : false;
 		}
 		if ( false === $staff_post_id ) {
 			return false;
@@ -462,7 +492,7 @@ class Staff {
 	 */
 	public function get_slack_handle( int|false $staff_post_id = false ): string|false {
 		if ( false === $staff_post_id ) {
-			$staff_post_id = $this->ID;
+			$staff_post_id = ( is_int( $this->ID ) && $this->ID > 0 ) ? $this->ID : false;
 		}
 		if ( false === $staff_post_id ) {
 			return false;

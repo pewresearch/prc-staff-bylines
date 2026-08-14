@@ -57,7 +57,7 @@ class Bylines_Query {
 				}
 				$byline_term_id = (int) $byline_term_id;
 				$staff          = new Staff( false, $byline_term_id );
-				if ( is_wp_error( $staff ) || empty( $staff->ID ) ) {
+				if ( ! $staff->is_resolved() ) {
 					continue;
 				}
 				$bylines[] = array(

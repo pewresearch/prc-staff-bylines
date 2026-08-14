@@ -120,10 +120,7 @@ class Staff_Query {
 			while ( $staff_query->have_posts() ) {
 				$staff_query->the_post();
 				$staff = new Staff( get_the_ID(), false );
-				if ( is_wp_error( $staff ) ) {
-					continue;
-				}
-				if ( ! $staff->is_currently_employed ) {
+				if ( ! $staff->is_resolved() || ! $staff->is_currently_employed ) {
 					continue;
 				}
 

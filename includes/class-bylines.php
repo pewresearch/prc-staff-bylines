@@ -66,7 +66,7 @@ class Bylines {
 				continue;
 			}
 			$staff = new Staff( false, $byline['termId'] );
-			if ( ! is_wp_error( $staff ) ) {
+			if ( $staff->is_resolved() ) {
 				$to_return[ $byline['termId'] ] = get_object_vars( $staff );
 			}
 		}

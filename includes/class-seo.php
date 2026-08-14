@@ -38,7 +38,7 @@ class SEO {
 		if ( is_tax( Content_Type::$taxonomy_object_name ) ) {
 			// Check if the current staff post has byline link enabled, if not then we should add noindex to the robots meta.
 			$staff = new Staff( false, get_queried_object()->term_id );
-			if ( is_wp_error( $staff ) ) {
+			if ( ! $staff->is_resolved() ) {
 				return $robots_directives;
 			}
 			if ( $staff->link ) {

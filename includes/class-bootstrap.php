@@ -277,7 +277,7 @@ class Bootstrap {
 		$admin_bar->remove_menu( 'edit' );
 
 		$staff = new Staff( false, get_queried_object()->term_id );
-		if ( is_wp_error( $staff ) ) {
+		if ( ! $staff->is_resolved() || ! is_int( $staff->ID ) ) {
 			return;
 		}
 

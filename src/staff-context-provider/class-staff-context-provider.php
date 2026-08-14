@@ -164,7 +164,8 @@ class Staff_Context_Provider {
 		}
 
 		$staff = new Staff( $staff_id, $term_id );
-		if ( is_wp_error( $staff ) ) {
+		// Constructors cannot return WP_Error; failed resolution leaves ID = 0.
+		if ( ! $staff->is_resolved() ) {
 			return '<!-- Staff not found -->';
 		}
 

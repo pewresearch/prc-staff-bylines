@@ -276,7 +276,7 @@ class REST_API {
 		}
 
 		$staff = new Staff( $staff_post_id, $byline_term_id );
-		if ( is_wp_error( $staff ) ) {
+		if ( ! $staff->is_resolved() ) {
 			return (array) $object;
 		}
 		$staff_data = get_object_vars( $staff );

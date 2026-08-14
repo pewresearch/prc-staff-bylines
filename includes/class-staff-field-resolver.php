@@ -111,7 +111,7 @@ class Staff_Field_Resolver {
 			return null;
 		}
 
-		if ( empty( $staff->ID ) ) {
+		if ( ! $staff->is_resolved() ) {
 			return null;
 		}
 

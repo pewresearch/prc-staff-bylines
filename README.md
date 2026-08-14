@@ -1,5 +1,7 @@
 # PRC Staff Bylines
 
+> Canonical docs: [docs/plugins/prc-staff-bylines/](../../docs/plugins/prc-staff-bylines/)
+
 Staff profile and byline management system for the PRC Platform. Links a `staff` custom post type to a `bylines` taxonomy via `[prc/term-data-store](https://github.com/pewresearch/term-data-store)` (namespace `PRC\TDS`), enabling multi-author bylines on any post type while keeping a single source of truth for each person's data.
 
 ## What it does
