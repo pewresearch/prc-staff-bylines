@@ -1,6 +1,6 @@
 {
 	"name": "@prc/staff-bylines",
-	"version": "1.2.2",
+	"version": "1.2.1",
 	"description": "A comprehensive staff and bylines management system for WordPress that creates synchronized staff profiles and byline taxonomies. Includes editor blocks and UI for managing staff information, providing an enhanced multi-author experience.",
 	"scripts": {
 		"build": "wp-scripts build --webpack-copy-php --experimental-modules && wp-scripts build-blocks-manifest && wp-scripts build --source-path=includes/bylines-inspector-sidebar-panel/src --output-path=includes/bylines-inspector-sidebar-panel/build && wp-scripts build --source-path=includes/staff-inspector-sidebar-panel/src --output-path=includes/staff-inspector-sidebar-panel/build",
