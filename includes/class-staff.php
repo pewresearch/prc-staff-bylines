@@ -134,6 +134,13 @@ class Staff {
 	protected static int $cache_ttl = 1 * HOUR_IN_SECONDS;
 
 	/**
+	 * Request-local slim byline bag (byline_{term_id} => array).
+	 *
+	 * @var array<string, array>
+	 */
+	private static array $byline_bag = array();
+
+	/**
 	 * Constructor.
 	 *
 	 * On failure this leaves default property values (ID = 0). PHP constructors
@@ -238,6 +245,9 @@ class Staff {
 			foreach ( $cache as $key => $value ) {
 				$this->$key = $value;
 			}
+			if ( ! array_key_exists( 'wp_user', $cache ) ) {
+				$this->wp_user = false;
+			}
 			return true;
 		}
 		return false;
@@ -248,13 +258,148 @@ class Staff {
 	 */
 	public function set_cache(): void {
 		if ( ! is_preview() && $this->is_resolved() ) {
+			$payload = get_object_vars( $this );
+			unset( $payload['wp_user'] );
 			wp_cache_set(
 				$this->ID,
-				get_object_vars( $this ),
+				$payload,
 				'staff_data',
 				self::$cache_ttl,
 			);
 		}
+	}
+
+	/**
+	 * Delete staff and slim-byline cache entries.
+	 *
+	 * @param int|string $id      Staff post ID or guest cache key.
+	 * @param int|null   $term_id Related bylines term ID when known.
+	 * @return void
+	 */
+	public static function clear_cache( int|string $id, $term_id = null ): void {
+		if ( is_int( $id ) && $id > 0 ) {
+			wp_cache_delete( $id, 'staff_data' );
+		} elseif ( is_string( $id ) && '' !== $id ) {
+			wp_cache_delete( $id, 'staff_data' );
+		}
+		if ( is_int( $term_id ) && $term_id > 0 ) {
+			$key = 'byline_' . $term_id;
+			wp_cache_delete( $key, 'staff_byline' );
+			unset( self::$byline_bag[ $key ] );
+			wp_cache_delete( 'guest_' . $term_id, 'staff_data' );
+		}
+	}
+
+	/**
+	 * Prime slim byline keys via get_multiple.
+	 *
+	 * @param array $term_ids Bylines term IDs.
+	 * @return void
+	 */
+	public static function prime_bylines( array $term_ids ): void {
+		$ids = array();
+		foreach ( $term_ids as $term_id ) {
+			$term_id = (int) $term_id;
+			if ( $term_id > 0 ) {
+				$ids[ $term_id ] = $term_id;
+			}
+		}
+		if ( empty( $ids ) ) {
+			return;
+		}
+
+		$keys = array();
+		foreach ( $ids as $term_id ) {
+			$keys[] = 'byline_' . $term_id;
+		}
+		$found = function_exists( 'wp_cache_get_multiple' )
+			? wp_cache_get_multiple( $keys, 'staff_byline' )
+			: array();
+		if ( ! is_array( $found ) ) {
+			$found = array();
+		}
+
+		foreach ( $ids as $term_id ) {
+			$key = 'byline_' . $term_id;
+			if ( array_key_exists( $key, $found ) && is_array( $found[ $key ] ) ) {
+				self::$byline_bag[ $key ] = $found[ $key ];
+			}
+		}
+	}
+
+	/**
+	 * Return a slim byline shape for a term, without hydrating bio or WP_User.
+	 *
+	 * @param int $term_id Bylines term ID.
+	 * @return array|false
+	 */
+	public static function get_byline( int $term_id ): array|false {
+		if ( $term_id <= 0 ) {
+			return false;
+		}
+
+		$key = 'byline_' . $term_id;
+		if ( array_key_exists( $key, self::$byline_bag ) ) {
+			return self::$byline_bag[ $key ];
+		}
+
+		$cached = wp_cache_get( $key, 'staff_byline' );
+		if ( is_array( $cached ) && array_key_exists( 'ID', $cached ) ) {
+			self::$byline_bag[ $key ] = $cached;
+			return $cached;
+		}
+
+		$slim = self::hydrate_byline( $term_id );
+		if ( false === $slim ) {
+			return false;
+		}
+
+		wp_cache_set( $key, $slim, 'staff_byline', self::$cache_ttl );
+		self::$byline_bag[ $key ] = $slim;
+		return $slim;
+	}
+
+	/**
+	 * Hydrate the slim byline shape from a staff post or guest term.
+	 *
+	 * @param int $term_id Bylines term ID.
+	 * @return array|false
+	 */
+	private static function hydrate_byline( int $term_id ): array|false {
+		$staff_post_id = get_term_meta( $term_id, 'tds_post_id', true );
+		if ( ! empty( $staff_post_id ) ) {
+			$staff_post = get_post( (int) $staff_post_id );
+			if ( $staff_post instanceof \WP_Post && 'staff' === $staff_post->post_type ) {
+				$helper                        = new self();
+				$helper->is_currently_employed = $helper->check_employment_status( (int) $staff_post->ID );
+				return array(
+					'ID'                    => (int) $staff_post->ID,
+					'name'                  => $staff_post->post_title,
+					'slug'                  => $staff_post->post_name,
+					'link'                  => $helper->get_staff_link( (int) $staff_post->ID ),
+					'job_title'             => $helper->get_job_title( (int) $staff_post->ID ),
+					'job_title_extended'    => $helper->get_job_title_extended( (int) $staff_post->ID ),
+					'is_currently_employed' => $helper->is_currently_employed,
+				);
+			}
+		}
+
+		$term = get_term( $term_id, 'bylines' );
+		if ( ! $term instanceof \WP_Term ) {
+			return false;
+		}
+
+		$is_guest_author = get_term_meta( $term_id, 'is_guest_author', true );
+		$guest_link      = $is_guest_author ? get_term_link( $term_id, 'bylines' ) : false;
+		return array(
+			'ID'                    => 'guest_' . $term_id,
+			'name'                  => $term->name,
+			'slug'                  => $term->slug,
+			'link'                  => is_string( $guest_link ) ? $guest_link : false,
+			'job_title'             => $is_guest_author ? 'Guest Author' : 'Guest Contributor',
+			'job_title_extended'    => '',
+			'is_currently_employed' => (bool) $is_guest_author,
+		);
 	}
 
 	/**
@@ -308,7 +453,7 @@ class Staff {
 		}
 
 		$this->ID                    = 'guest_' . $term_id;
-		$is_guest_author             = get_post_meta( $term_id, 'is_guest_author', true );
+		$is_guest_author             = get_term_meta( $term_id, 'is_guest_author', true );
 		$name                        = $term->name;
 		$this->name                  = $name;
 		$this->slug                  = $term->slug;

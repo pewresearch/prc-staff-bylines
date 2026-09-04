@@ -59,15 +59,21 @@ class Bylines {
 	 * @return array The staff objects.
 	 */
 	private function get_staff_objects( array $bylines = array() ): array {
-		$to_return = array();
+		$term_ids = array();
 		foreach ( $bylines as $byline ) {
-			// If the byline is empty, malformed, or has a null/non-integer termId, skip it.
 			if ( ! array_key_exists( 'termId', $byline ) || ! is_int( $byline['termId'] ) ) {
 				continue;
 			}
-			$staff = new Staff( false, $byline['termId'] );
-			if ( $staff->is_resolved() ) {
-				$to_return[ $byline['termId'] ] = get_object_vars( $staff );
+			$term_ids[] = $byline['termId'];
+		}
+
+		Staff::prime_bylines( $term_ids );
+
+		$to_return = array();
+		foreach ( $term_ids as $term_id ) {
+			$slim = Staff::get_byline( $term_id );
+			if ( false !== $slim ) {
+				$to_return[ $term_id ] = $slim;
 			}
 		}
 		return $to_return;

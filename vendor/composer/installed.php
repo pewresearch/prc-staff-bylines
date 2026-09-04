@@ -3,7 +3,7 @@
         'name' => 'prc/staff-bylines',
         'pretty_version' => 'dev-trunk',
         'version' => 'dev-trunk',
-        'reference' => 'e7e2cfa330beab610544cfd5467a4f2a73267de1',
+        'reference' => '804ddde449658d8cb94e2325ff2a2de1d02e8bbf',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -121,7 +121,7 @@
         'prc/staff-bylines' => array(
             'pretty_version' => 'dev-trunk',
             'version' => 'dev-trunk',
-            'reference' => 'e7e2cfa330beab610544cfd5467a4f2a73267de1',
+            'reference' => '804ddde449658d8cb94e2325ff2a2de1d02e8bbf',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

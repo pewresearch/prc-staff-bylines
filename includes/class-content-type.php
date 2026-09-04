@@ -204,9 +204,48 @@ class Content_Type {
 		$loader->add_filter( 'posts_orderby', $this, 'orderby_last_name', PHP_INT_MAX, 2 );
 		$loader->add_filter( 'rest_staff_collection_params', $this, 'filter_add_rest_orderby_params', 10, 1 );
 		$loader->add_action( 'pre_get_posts', $this, 'hide_former_staff', 10, 1 );
+		$loader->add_action( 'save_post_staff', $this, 'clear_staff_cache_on_save', 10, 1 );
+		$loader->add_action( 'saved_term', $this, 'clear_byline_cache_on_term_save', 10, 3 );
 		$loader->add_filter( 'the_title', $this, 'indicate_former_staff', 10, 1 );
 		$loader->add_filter( 'prc_sitemap_supported_taxonomies', $this, 'opt_into_sitemap', 10, 1 );
 		$loader->add_filter( 'prc_platform_pub_listing_default_args', $this, 'opt_into_pub_listing', 10, 1 );
+	}
+
+	/**
+	 * Clear staff_data and related slim byline cache when a staff post is saved.
+	 *
+	 * @hook save_post_staff
+	 * @param int $post_id Staff post ID.
+	 * @return void
+	 */
+	public function clear_staff_cache_on_save( $post_id ): void {
+		$term_id = null;
+		if ( function_exists( '\\PRC\\TDS\\get_related_term' ) ) {
+			$term = \PRC\TDS\get_related_term( $post_id );
+			if ( is_object( $term ) && ! empty( $term->term_id ) ) {
+				$term_id = (int) $term->term_id;
+			}
+		}
+		Staff::clear_cache( (int) $post_id, $term_id );
+	}
+
+	/**
+	 * Clear slim byline cache and linked staff_data when a bylines term is saved.
+	 *
+	 * @hook saved_term
+	 * @param int    $term_id  Term ID.
+	 * @param int    $tt_id    Term taxonomy ID.
+	 * @param string $taxonomy Taxonomy slug.
+	 * @return void
+	 */
+	public function clear_byline_cache_on_term_save( $term_id, $tt_id, $taxonomy ): void {
+		unset( $tt_id );
+		if ( 'bylines' !== $taxonomy ) {
+			return;
+		}
+		$staff_post_id = get_term_meta( $term_id, 'tds_post_id', true );
+		$id            = ( ! empty( $staff_post_id ) ) ? (int) $staff_post_id : 0;
+		Staff::clear_cache( $id, (int) $term_id );
 	}
 
 	/**
