@@ -9,7 +9,7 @@ declare(strict_types=1);
 namespace PRC\Platform\Staff_Bylines;
 
 use WP_Error;
-use function PRC\TDS\get_related_term;
+use function PRC\Primitives\TDS\get_related_term;
 
 /**
  * This is the primary means of accessing a unified Staff member. Combining both term and post type.

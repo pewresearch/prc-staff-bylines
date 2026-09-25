@@ -220,8 +220,8 @@ class Content_Type {
 	 */
 	public function clear_staff_cache_on_save( $post_id ): void {
 		$term_id = null;
-		if ( function_exists( '\\PRC\\TDS\\get_related_term' ) ) {
-			$term = \PRC\TDS\get_related_term( $post_id );
+		if ( function_exists( '\\PRC\\Primitives\\TDS\\get_related_term' ) ) {
+			$term = \PRC\Primitives\TDS\get_related_term( $post_id );
 			if ( is_object( $term ) && ! empty( $term->term_id ) ) {
 				$term_id = (int) $term->term_id;
 			}
@@ -300,7 +300,7 @@ class Content_Type {
 		register_taxonomy( 'staff-type', self::$post_object_name, self::$staff_type_taxonomy_args );
 
 		// Link the post object and taxonomy object into one entity.
-		\PRC\TDS\add_relationship( self::$post_object_name, self::$taxonomy_object_name );
+		\PRC\Primitives\TDS\add_relationship( self::$post_object_name, self::$taxonomy_object_name );
 	}
 
 	/**

@@ -1,13 +1,12 @@
 {
 	"name": "prc/staff-bylines",
-	"description": "Staff profile and byline management system for the PRC Platform. Links a `staff` post type to a `bylines` taxonomy via prc/term-data-store.",
+	"description": "Staff profile and byline management system for the PRC Platform. Links a `staff` post type to a `bylines` taxonomy via the prc/primitives term data store.",
 	"type": "wordpress-plugin",
 	"license": "GPL-2.0-or-later",
 	"require": {
 		"php": ">=8.2",
 		"automattic/jetpack-autoloader": "^5.0",
-		"prc/block-utils": "^1.1",
-		"prc/term-data-store": "^1.0"
+		"prc/primitives": "^2.0"
 	},
 	"require-dev": {
 		"dealerdirect/phpcodesniffer-composer-installer": "^1.0.0"
@@ -28,11 +27,7 @@
 	"repositories": [
 		{
 			"type": "vcs",
-			"url": "https://github.com/pewresearch/term-data-store"
-		},
-		{
-			"type": "vcs",
-			"url": "https://github.com/pewresearch/prc-block-utils"
+			"url": "https://github.com/pewresearch/prc-primitives.git"
 		}
 	]
 }

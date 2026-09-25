@@ -2,11 +2,11 @@
 
 > Canonical docs: [docs/plugins/prc-staff-bylines/](../../docs/plugins/prc-staff-bylines/)
 
-Staff profile and byline management system for the PRC Platform. Links a `staff` custom post type to a `bylines` taxonomy via `[prc/term-data-store](https://github.com/pewresearch/term-data-store)` (namespace `PRC\TDS`), enabling multi-author bylines on any post type while keeping a single source of truth for each person's data.
+Staff profile and byline management system for the PRC Platform. Links a `staff` custom post type to a `bylines` taxonomy via the `prc/primitives` term data store (namespace `PRC\Primitives\TDS`), enabling multi-author bylines on any post type while keeping a single source of truth for each person's data.
 
 ## What it does
 
-- Registers the `staff` post type and `bylines` taxonomy and binds them through `prc/term-data-store` so each staff member is addressable by either a post ID or a term ID.
+- Registers the `staff` post type and `bylines` taxonomy and binds them through the `prc/primitives` term data store so each staff member is addressable by either a post ID or a term ID.
 - Registers supporting taxonomies: `areas-of-expertise`, `staff-type`.
 - Stores bylines, acknowledgements, and display flags as post meta on any post type that declares `prc-bylines` support.
 - Adds a `staffInfo` REST field to both `bylines` terms and `staff` posts, exposing a normalized staff data object to the editor and frontend consumers.
@@ -21,7 +21,7 @@ Staff profile and byline management system for the PRC Platform. Links a `staff`
 
 | Object    | Slug                 | Notes                                                                                                  |
 | --------- | -------------------- | ------------------------------------------------------------------------------------------------------ |
-| Post type | `staff`              | Public, REST-enabled, no archive. Linked to `bylines` via `prc/term-data-store`.                       |
+| Post type | `staff`              | Public, REST-enabled, no archive. Linked to `bylines` via the `prc/primitives` term data store.        |
 | Taxonomy  | `bylines`            | Non-hierarchical. Slug rewrite: `/staff/{slug}`. Applied to all post types with `prc-bylines` support. |
 | Taxonomy  | `areas-of-expertise` | Hierarchical. Slug rewrite: `/expertise/{slug}`. Staff only.                                           |
 | Taxonomy  | `staff-type`         | Hierarchical. Used to distinguish current staff from former staff. Staff only.                         |
@@ -113,7 +113,7 @@ Two scripts are enqueued via `enqueue_block_editor_assets`:
 | Hook                                       | Direction | Description                                                                                                                                           |
 | ------------------------------------------ | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `prc_platform__bylines_enabled_post_types` | Filter    | Append post type slugs to opt them into the bylines system. Prefer `add_post_type_support( $pt, 'prc-bylines' )` instead.                             |
-| `tds_balancing_from_term`                  | Filter    | Overrides `prc/term-data-store` balancing for guest-author terms to prevent post creation.                                                            |
+| `tds_balancing_from_term`                  | Filter    | Overrides the `prc/primitives` term data store balancing for guest-author terms to prevent post creation.                                             |
 | `posts_orderby`                            | Filter    | Enables `orderby=last_name` for WP_Query on the `staff` post type.                                                                                    |
 | `rest_staff_collection_params`             | Filter    | Adds `last_name` to the allowed `orderby` enum on the `staff` REST collection.                                                                        |
 | `pre_get_posts`                            | Action    | Excludes former staff (not in `staff`, `executive-team`, `managing-directors` staff-types) from `areas-of-expertise` and `bylines` taxonomy archives. |
@@ -214,7 +214,7 @@ $bylines->format( 'html' );   // same with <a> or <span> per-author, comma/and s
 ## Dependencies
 
 - `prc-platform-core` (required plugin) — provides `prc_platform_on_publish`, platform utility functions, and script-loading helpers.
-- `[prc/term-data-store](https://github.com/pewresearch/term-data-store)` (`PRC\TDS` namespace) — used to create and maintain the `staff` post ↔ `bylines` term relationship.
+- `prc/primitives` term data store (`PRC\Primitives\TDS` namespace) — used to create and maintain the `staff` post ↔ `bylines` term relationship.
 - Yoast SEO — SEO class hooks are conditional on Yoast being active.
 
 ## Development
