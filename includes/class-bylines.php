@@ -1,10 +1,11 @@
 <?php
-declare(strict_types=1);
 /**
  * Bylines class.
  *
  * @package PRC\Platform\Staff_Bylines
  */
+
+declare(strict_types=1);
 
 namespace PRC\Platform\Staff_Bylines;
 
@@ -61,7 +62,7 @@ class Bylines {
 	private function get_staff_objects( array $bylines = array() ): array {
 		$term_ids = array();
 		foreach ( $bylines as $byline ) {
-			if ( ! array_key_exists( 'termId', $byline ) || ! is_int( $byline['termId'] ) ) {
+			if ( ! is_array( $byline ) || ! array_key_exists( 'termId', $byline ) || ! is_int( $byline['termId'] ) ) {
 				continue;
 			}
 			$term_ids[] = $byline['termId'];
