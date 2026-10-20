@@ -1,10 +1,11 @@
 <?php
-declare(strict_types=1);
 /**
  * Bootstrap class.
  *
  * @package    PRC\Platform\Staff_Bylines
  */
+
+declare(strict_types=1);
 
 namespace PRC\Platform\Staff_Bylines;
 
@@ -79,6 +80,7 @@ class Bootstrap {
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-staff.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-staff-field-resolver.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/bits/class-staff-bits.php';
+		require_once plugin_dir_path( __DIR__ ) . '/includes/class-byline-sync.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-bylines.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-seo.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-rest-api.php';
@@ -144,7 +146,7 @@ class Bootstrap {
 		new REST_API( $this->get_loader() );
 		new Maelstrom( $this->get_loader() );
 
-		if ( class_exists( 'PRC\Platform\Markdown_For_Agents\LLMs_Txt' ) ) {
+		if ( class_exists( 'Content_For_Agents\PRC_Bridge\LLMs_Txt' ) || class_exists( 'PRC\Platform\Markdown_For_Agents\LLMs_Txt' ) ) {
 			require_once plugin_dir_path( __DIR__ ) . '/includes/class-llms-txt-section.php';
 			new Llms_Txt_Section( $this->get_loader() );
 		}

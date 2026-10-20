@@ -1,10 +1,11 @@
 <?php
-declare(strict_types=1);
 /**
  * REST API class.
  *
  * @package PRC\Platform\Staff_Bylines
  */
+
+declare(strict_types=1);
 
 namespace PRC\Platform\Staff_Bylines;
 
@@ -132,42 +133,6 @@ class REST_API {
 	}
 
 	/**
-	 * Sync the bylines taxonomy terms from post meta (bylines + acknowledgements order preserved in meta only).
-	 *
-	 * @param int $post_id Post ID.
-	 * @return void
-	 */
-	private function sync_bylines_taxonomy_for_post( int $post_id ): void {
-		$bylines = get_post_meta( $post_id, 'bylines', true );
-		$acks    = get_post_meta( $post_id, 'acknowledgements', true );
-		if ( ! is_array( $bylines ) ) {
-			$bylines = array();
-		}
-		if ( ! is_array( $acks ) ) {
-			$acks = array();
-		}
-		$term_ids = array();
-		foreach ( $bylines as $row ) {
-			if ( is_array( $row ) && isset( $row['termId'] ) ) {
-				$tid = (int) $row['termId'];
-				if ( $tid > 0 ) {
-					$term_ids[] = $tid;
-				}
-			}
-		}
-		foreach ( $acks as $row ) {
-			if ( is_array( $row ) && isset( $row['termId'] ) ) {
-				$tid = (int) $row['termId'];
-				if ( $tid > 0 ) {
-					$term_ids[] = $tid;
-				}
-			}
-		}
-		$term_ids = array_values( array_unique( $term_ids ) );
-		wp_set_object_terms( $post_id, $term_ids, Content_Type::$taxonomy_object_name, false );
-	}
-
-	/**
 	 * REST get: bylinesOrdered.
 	 *
 	 * @param mixed $object Prepared post.
@@ -214,7 +179,7 @@ class REST_API {
 		}
 		$sanitized = $this->sanitize_ordered_bylines_array( $value );
 		update_post_meta( $post_id, 'bylines', $sanitized );
-		$this->sync_bylines_taxonomy_for_post( $post_id );
+		Byline_Sync::sync_taxonomy_from_meta( $post_id );
 		return true;
 	}
 
@@ -235,7 +200,7 @@ class REST_API {
 		}
 		$sanitized = $this->sanitize_ordered_bylines_array( $value );
 		update_post_meta( $post_id, 'acknowledgements', $sanitized );
-		$this->sync_bylines_taxonomy_for_post( $post_id );
+		Byline_Sync::sync_taxonomy_from_meta( $post_id );
 		return true;
 	}
 

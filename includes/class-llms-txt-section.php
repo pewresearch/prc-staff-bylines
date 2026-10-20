@@ -9,7 +9,8 @@ declare( strict_types=1 );
 
 namespace PRC\Platform\Staff_Bylines;
 
-use PRC\Platform\Markdown_For_Agents\LLMs_Txt;
+use Content_For_Agents\PRC_Bridge\LLMs_Txt;
+use PRC\Platform\Markdown_For_Agents\LLMs_Txt as Legacy_LLMs_Txt;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -21,15 +22,33 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Llms_Txt_Section {
 
 	/**
+	 * The active /llms.txt class (Content for Agents bridge or legacy plugin).
+	 *
+	 * @var class-string
+	 */
+	private string $llms_txt = LLMs_Txt::class;
+
+	/**
+	 * Add the Researchers section to the index.
+	 *
 	 * @param Loader $loader Loader instance.
 	 */
 	public function __construct( Loader $loader ) {
 		unset( $loader );
+		if ( class_exists( LLMs_Txt::class ) ) {
+			add_post_type_support( Content_Type::$post_object_name, 'content-for-agents-llms-txt' );
+			add_filter( 'content_for_agents_llms_txt_sections', array( $this, 'register_section' ) );
+			return;
+		}
+
+		$this->llms_txt = Legacy_LLMs_Txt::class;
 		add_post_type_support( Content_Type::$post_object_name, 'prc-markdown-for-agents-llms-txt' );
 		add_filter( 'prc_markdown_for_agents_llms_txt_sections', array( $this, 'register_section' ) );
 	}
 
 	/**
+	 * Append the Researchers section when staff are published.
+	 *
 	 * @param array<int, array<string, mixed>> $sections Existing sections.
 	 * @return array<int, array<string, mixed>>
 	 */
@@ -50,13 +69,15 @@ class Llms_Txt_Section {
 	}
 
 	/**
+	 * Link currently employed staff, capped for the index.
+	 *
 	 * @return array<int, array<string, string>>
 	 */
 	private function get_researcher_links(): array {
-		$total  = 0;
-		$links  = array();
-		$paged  = 1;
-		$batch  = 100;
+		$total    = 0;
+		$links    = array();
+		$paged    = 1;
+		$batch    = 100;
 		$has_more = true;
 
 		while ( $has_more ) {
@@ -87,7 +108,7 @@ class Llms_Txt_Section {
 
 				++$total;
 
-				if ( count( $links ) >= LLMs_Txt::SECTION_CAP ) {
+				if ( count( $links ) >= $this->llms_txt::SECTION_CAP ) {
 					continue;
 				}
 
@@ -118,6 +139,6 @@ class Llms_Txt_Section {
 
 		$archive_url = home_url( '/staff/' );
 
-		return LLMs_Txt::maybe_append_see_all_link( $links, $total, $archive_url );
+		return $this->llms_txt::maybe_append_see_all_link( $links, $total, $archive_url );
 	}
 }

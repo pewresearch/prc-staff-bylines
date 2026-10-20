@@ -23,9 +23,6 @@
 	"supports": {
 		"anchor": true,
 		"html": false,
-		"prcMarkdownForAgents": {
-			"mode": "children-only"
-		},
 		"spacing": {
 			"blockGap": true,
 			"margin": ["top", "bottom"],

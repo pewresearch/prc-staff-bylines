@@ -105,9 +105,6 @@ return array(
 		'supports' => array(
 			'anchor' => true,
 			'html' => false,
-			'prcMarkdownForAgents' => array(
-				'mode' => 'children-only'
-			),
 			'spacing' => array(
 				'blockGap' => true,
 				'margin' => array(
@@ -174,9 +171,6 @@ return array(
 		'supports' => array(
 			'anchor' => true,
 			'html' => false,
-			'prcMarkdownForAgents' => array(
-				'mode' => 'children-only'
-			),
 			'interactivity' => true
 		),
 		'usesContext' => array(
@@ -226,9 +220,6 @@ return array(
 		'supports' => array(
 			'anchor' => true,
 			'html' => false,
-			'prcMarkdownForAgents' => array(
-				'mode' => 'children-only'
-			),
 			'spacing' => array(
 				'blockGap' => true,
 				'margin' => array(
