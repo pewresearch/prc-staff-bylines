@@ -100,10 +100,61 @@ class Byline_Sync {
 	}
 
 	/**
+	 * Whether an acknowledgement row exists for an enforced byline other than the one to keep.
+	 *
+	 * @param int $post_id      Post ID.
+	 * @param int $keep_term_id Enforced bylines term ID that stays.
+	 */
+	public static function has_stale_enforced_rows( int $post_id, int $keep_term_id ): bool {
+		foreach ( self::get_rows( $post_id, self::META_ACKNOWLEDGEMENTS ) as $row ) {
+			if ( self::is_stale_enforced_row( $row, $keep_term_id ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Remove acknowledgement rows that `add_term_row()` created for an enforced
+	 * byline other than the one to keep, then resync the taxonomy.
+	 *
+	 * @param int $post_id      Post ID.
+	 * @param int $keep_term_id Enforced bylines term ID that stays.
+	 */
+	public static function remove_stale_enforced_rows( int $post_id, int $keep_term_id ): void {
+		$rows = self::get_rows( $post_id, self::META_ACKNOWLEDGEMENTS );
+		$kept = array_values(
+			array_filter(
+				$rows,
+				static fn( array $row ): bool => ! self::is_stale_enforced_row( $row, $keep_term_id )
+			)
+		);
+		if ( count( $kept ) === count( $rows ) ) {
+			return;
+		}
+
+		update_post_meta( $post_id, self::META_ACKNOWLEDGEMENTS, $kept );
+		self::sync_taxonomy_from_meta( $post_id );
+	}
+
+	/**
+	 * Whether a row was created by enforcement for a different term.
+	 *
+	 * @param array{key: string, termId: int} $row          Acknowledgement row.
+	 * @param int                             $keep_term_id Enforced term ID that stays.
+	 */
+	private static function is_stale_enforced_row( array $row, int $keep_term_id ): bool {
+		return str_starts_with( $row['key'], 'enforced-' ) && $row['termId'] !== $keep_term_id;
+	}
+
+	/**
 	 * Attribute a post to one byline term without disturbing existing rows.
 	 *
 	 * Appends a row to the chosen meta key unless a byline or acknowledgement
-	 * already names the term, then syncs the taxonomy. Safe to call repeatedly.
+	 * already names the term, then attaches the term to the post. The term is
+	 * appended to the post's existing `bylines` terms instead of rewriting the
+	 * whole set, so nothing else on the post is deleted and re-inserted. Safe to
+	 * call repeatedly.
 	 *
 	 * @param int    $post_id  Post ID.
 	 * @param int    $term_id  Bylines term ID.
@@ -130,7 +181,7 @@ class Byline_Sync {
 			update_post_meta( $post_id, $meta_key, $rows );
 		}
 
-		self::sync_taxonomy_from_meta( $post_id );
+		wp_set_object_terms( $post_id, array( $term_id ), Content_Type::$taxonomy_object_name, true );
 		return true;
 	}
 }
