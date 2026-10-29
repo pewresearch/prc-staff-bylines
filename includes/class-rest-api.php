@@ -254,15 +254,17 @@ class REST_API {
 		);
 
 		$data = array(
-			'staffName'             => $staff_data['name'],
-			'staffJobTitle'         => $staff_data['job_title'],
-			'staffImage'            => $staff_data['photo'],
-			'staffTwitter'          => null,
-			'staffExpertise'        => $staff_data['expertise'],
-			'staffBio'              => $staff_data['bio'],
-			'staffBioShort'         => $staff_name_as_link . ' is ' . $staff_data['job_title_extended'],
-			'staffJobTitleExtended' => $staff_data['job_title_extended'],
-			'staffLink'             => $staff_data['link'],
+			'staffName'               => $staff_data['name'],
+			'staffJobTitle'           => $staff_data['job_title'],
+			'staffImage'              => $staff_data['photo'],
+			'staffTwitter'            => null,
+			'staffExpertise'          => $staff_data['expertise'],
+			'staffBio'                => $staff_data['bio'],
+			'staffBioShort'           => $staff_name_as_link . ' is ' . $staff_data['job_title_extended'],
+			'staffJobTitleExtended'   => $staff_data['job_title_extended'],
+			'staffLink'               => $staff_data['link'],
+			'staffOrcid'              => $staff_data['orcid'],
+			'staffOrcidAuthenticated' => $staff_data['orcid_authenticated'],
 		);
 
 		return $data;

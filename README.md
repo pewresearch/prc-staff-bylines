@@ -45,13 +45,15 @@ add_filter( 'prc_platform__bylines_enabled_post_types', function( $types ) {
 
 ### On `staff` posts
 
-| Key                 | Type      | Description                                                                              |
-| ------------------- | --------- | ---------------------------------------------------------------------------------------- |
-| `jobTitle`          | `string`  | Staff member's job title. Prefixed with "Former" for inactive staff.                     |
-| `jobTitleExtended`  | `string`  | Mini-biography sentence fragment, e.g. "is a Senior Researcher…".                        |
-| `bylineLinkEnabled` | `boolean` | Controls whether a public byline link and archive page are exposed.                      |
-| `socialProfiles`    | `array`   | Array of `{key, url}` social profile objects.                                            |
-| `_maelstrom`        | `object`  | `{enabled: bool, restricted: string[]}` — staff safety net. See [Maelstrom](#maelstrom). |
+| Key                    | Type      | Description                                                                                                     |
+| ---------------------- | --------- | --------------------------------------------------------------------------------------------------------------- |
+| `jobTitle`             | `string`  | Staff member's job title. Prefixed with "Former" for inactive staff.                                            |
+| `jobTitleExtended`     | `string`  | Mini-biography sentence fragment, e.g. "is a Senior Researcher…".                                               |
+| `orcid`                | `string`  | ORCID iD in `XXXX-XXXX-XXXX-XXXX` form, or `''`. Saving any other value stores `''`. See [ORCID iD](#orcid-id). |
+| `_orcid_authenticated` | `string`  | Protected, not in REST. The iD that ORCID OAuth confirmed. Only the OAuth callback writes it.                   |
+| `bylineLinkEnabled`    | `boolean` | Controls whether a public byline link and archive page are exposed.                                             |
+| `socialProfiles`       | `array`   | Array of `{key, url}` social profile objects.                                                                   |
+| `_maelstrom`           | `object`  | `{enabled: bool, restricted: string[]}` — staff safety net. See [Maelstrom](#maelstrom).                        |
 
 ### On bylines-enabled post types
 
@@ -83,7 +85,9 @@ add_filter( 'prc_platform__bylines_enabled_post_types', function( $types ) {
   "staffExpertise": [{ "url": "...", "label": "...", "slug": "..." }],
   "staffBio": "<p>...</p>",
   "staffBioShort": "<a href=\"...\">Jane Smith</a> is a Senior Researcher...",
-  "staffLink": "https://pewresearch.org/staff/jane-smith"
+  "staffLink": "https://example.org/staff/jane-smith",
+  "staffOrcid": "0000-0002-1825-0097",
+  "staffOrcidAuthenticated": true
 }
 ```
 
@@ -128,6 +132,9 @@ Two scripts are enqueued via `enqueue_block_editor_assets`:
 | `template_redirect`                        | Action    | Sets 404 on WordPress native author archives.                                                                                                         |
 | `admin_bar_menu`                           | Action    | Replaces the default "Edit Post" admin bar link with "Edit Staff" on byline term archive pages.                                                       |
 | `enqueue_block_editor_assets`              | Action    | Enqueues the bylines and staff inspector sidebar panel scripts.                                                                                       |
+| `admin_post_prc_orcid_authorize`           | Action    | Starts ORCID OAuth for a staff post. See [ORCID iD](#orcid-id).                                                                                       |
+| `admin_post_prc_orcid_callback`            | Action    | Finishes ORCID OAuth and stores the confirmed iD.                                                                                                     |
+| `render_block_core/paragraph`              | Filter    | Removes a paragraph bound to the ORCID iD when the staff member has no iD.                                                                            |
 
 ## WP-CLI commands
 
@@ -152,6 +159,24 @@ Configure via the `_maelstrom` post meta on the `staff` post:
 
 The `enabled` flag is computed at publish time based on whether the post's `regions-countries` terms overlap with `restricted`. Do not rely on the stored `enabled` value at rest.
 
+## ORCID iD
+
+Staff posts store an ORCID iD in the `orcid` meta. `Orcid::parse()` accepts a bare iD, a compact iD, or an `orcid.org` profile URL. It checks the ISO 7064 Mod 11-2 checksum and stores the hyphenated form. An invalid value is stored as `''`.
+
+An iD is authenticated when `orcid` equals `_orcid_authenticated`. Nothing stores a separate flag. When an editor changes the iD by hand, it becomes unauthenticated.
+
+To authenticate, an editor clicks **Authenticate with ORCID** in the staff sidebar. A popup opens `admin-post.php?action=prc_orcid_authorize`, which redirects to ORCID with the `/authenticate` scope. The staff member signs in to ORCID. ORCID then redirects to `admin-post.php?action=prc_orcid_callback`. The callback checks the single-use state, exchanges the code for the iD, and writes both meta keys. It does not store the access token. The popup sends the result to the editor on the `prc-orcid-auth` BroadcastChannel and closes. It does not use `window.opener`, because the ORCID round trip can sever it.
+
+In the ORCID developer tools, register `admin-post.php?action=prc_orcid_callback` under the site admin URL as the redirect URI.
+
+| Environment variable               | Description                                                           |
+| ---------------------------------- | --------------------------------------------------------------------- |
+| `PRC_PLATFORM_ORCID_CLIENT_ID`     | ORCID public API client ID. The button is disabled when empty.        |
+| `PRC_PLATFORM_ORCID_CLIENT_SECRET` | ORCID public API client secret. The button is disabled when empty.    |
+| `PRC_PLATFORM_ORCID_ENVIRONMENT`   | `sandbox` uses `sandbox.orcid.org`. Any other value uses `orcid.org`. |
+
+The **ORCID iD** binding field (`valueToFetch: orcid`) renders the iD as a link. The link has the class `wp-block-prc-block-staff-context-provider__orcid` plus `is-authenticated` or `is-unauthenticated`. The `prc-staff-bylines/staff-orcid` pattern and the `taxonomy-bylines` theme template use this field.
+
 ## The `Staff` object
 
 `Staff` is the primary data accessor, resolving a unified staff member from either a post ID or a bylines term ID. It caches hydrated data in the object cache (`staff_data` group, 1-hour TTL) for unauthenticated requests.
@@ -172,6 +197,8 @@ $staff->expertise;       // [['url'=>'...','label'=>'...','slug'=>'...']] | fals
 $staff->social_profiles; // array
 $staff->bio;             // string (filtered post content)
 $staff->mini_bio;        // string (linked name + job_title_extended sentence)
+$staff->orcid;           // string|false — canonical ORCID iD
+$staff->orcid_authenticated; // bool — true when ORCID confirmed the stored iD
 ```
 
 For guest contributors (byline terms with no linked `staff` post), `set_guest()` is called instead, populating the same interface with defaults.
@@ -200,6 +227,7 @@ $bylines->format( 'html' );   // same with <a> or <span> per-author, comma/and s
 | `includes/class-staff.php`                  | `Staff` data object. Resolves staff members from post ID or term ID, with object cache support.                   |
 | `includes/class-bylines.php`                | `Bylines` data object. Fetches and formats bylines for a given post.                                              |
 | `includes/class-rest-api.php`               | Registers the `staffInfo` field on `bylines` terms and `staff` posts.                                             |
+| `includes/class-orcid.php`                  | Parses and renders ORCID iDs and runs the ORCID OAuth flow.                                                       |
 | `includes/class-seo.php`                    | Integrates with Yoast SEO for author meta and robots directives.                                                  |
 | `includes/class-maelstrom.php`              | Enforces staff safety net on publish via `prc_platform_on_publish`.                                               |
 | `includes/class-guest-author-commands.php`  | WP-CLI command for creating guest-author byline terms.                                                            |

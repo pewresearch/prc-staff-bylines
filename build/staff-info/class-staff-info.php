@@ -1,10 +1,11 @@
 <?php
-declare(strict_types=1);
 /**
  * Staff Info Block
  *
  * @package PRC\Platform\Staff_Bylines
  */
+
+declare(strict_types=1);
 
 namespace PRC\Platform\Staff_Bylines;
 
@@ -62,7 +63,29 @@ class Staff_Info {
 			$loader->add_action( 'init', $this, 'block_init' );
 			$loader->add_action( 'init', $this, 'register_assets' );
 			$loader->add_action( 'enqueue_block_editor_assets', $this, 'register_editor_script' );
+			$loader->add_filter( 'render_block_core/paragraph', $this, 'remove_empty_orcid_paragraph', 10, 2 );
 		}
+	}
+
+	/**
+	 * Drop paragraphs bound to the ORCID iD when the staff member has none.
+	 *
+	 * @hook render_block_core/paragraph
+	 * @param string $block_content Rendered block HTML.
+	 * @param array  $block         Parsed block.
+	 * @return string
+	 */
+	public function remove_empty_orcid_paragraph( $block_content, $block ): string {
+		$binding = $block['attrs']['metadata']['bindings']['content'] ?? null;
+		if (
+			is_array( $binding )
+			&& 'prc-platform/staff-info' === ( $binding['source'] ?? null )
+			&& 'orcid' === ( $binding['args']['valueToFetch'] ?? null )
+			&& '' === trim( wp_strip_all_tags( (string) $block_content ) )
+		) {
+			return '';
+		}
+		return (string) $block_content;
 	}
 
 	/**

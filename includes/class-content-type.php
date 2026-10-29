@@ -1,10 +1,11 @@
 <?php
-declare(strict_types=1);
 /**
  * Content Type class.
  *
  * @package PRC\Platform\Staff_Bylines
  */
+
+declare(strict_types=1);
 
 namespace PRC\Platform\Staff_Bylines;
 
@@ -343,6 +344,22 @@ class Content_Type {
 				'revisions_enabled' => true,
 				'single'            => true,
 				'type'              => 'string',
+				'auth_callback'     => function () {
+					return current_user_can( 'edit_posts' );
+				},
+			)
+		);
+
+		register_post_meta(
+			self::$post_object_name,
+			'orcid',
+			array(
+				'description'       => 'This staff member\'s ORCID iD in XXXX-XXXX-XXXX-XXXX form.',
+				'show_in_rest'      => true,
+				'revisions_enabled' => true,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => array( Orcid::class, 'sanitize_meta' ),
 				'auth_callback'     => function () {
 					return current_user_can( 'edit_posts' );
 				},

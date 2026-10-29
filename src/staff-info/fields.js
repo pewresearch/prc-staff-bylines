@@ -72,12 +72,17 @@ export const STAFF_INFO_BINDING_FIELDS = [
 		type: 'string',
 		args: { valueToFetch: 'photo-full' },
 	},
+	{
+		label: __('ORCID iD', 'prc-staff-bylines'),
+		type: 'string',
+		args: { valueToFetch: 'orcid' },
+	},
 ];
 
 /**
  * PHP `fields` metadata mirror (label / type / args triples).
  *
- * @return {Array<{label: string, type: string, args: Record<string, unknown>}>}
+ * @return {Array<{label: string, type: string, args: Record<string, unknown>}>} Field manifest.
  */
 export function getStaffInfoBindingFieldsForPhp() {
 	return STAFF_INFO_BINDING_FIELDS.map((field) => ({

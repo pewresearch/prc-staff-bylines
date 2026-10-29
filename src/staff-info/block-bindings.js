@@ -8,6 +8,18 @@ import { store as coreStore } from '@wordpress/core-data';
 import { STAFF_INFO_BINDING_FIELDS } from './fields';
 import { STAFF_PHOTO_PLACEHOLDER_DATA_URI } from './placeholders';
 
+/**
+ * Format an ORCID iD link for editor preview (mirrors Orcid::render_link).
+ *
+ * @param {string}  id            Canonical ORCID iD.
+ * @param {boolean} authenticated Whether ORCID confirmed the iD.
+ * @return {string} Anchor markup.
+ */
+function formatOrcidHtml(id, authenticated) {
+	const status = authenticated ? 'is-authenticated' : 'is-unauthenticated';
+	return `<a class="wp-block-prc-block-staff-context-provider__orcid ${status}" href="https://orcid.org/${id}" rel="me">${id}</a>`;
+}
+
 const PLACEHOLDERS = {
 	name: __('Staff Name', 'prc-staff-bylines'),
 	job_title: __('Job Title', 'prc-staff-bylines'),
@@ -31,13 +43,14 @@ const PLACEHOLDERS = {
 	photo: STAFF_PHOTO_PLACEHOLDER_DATA_URI,
 	'photo-full': '#',
 	'photo-full-download-text': __('Download photo', 'prc-staff-bylines'),
+	orcid: formatOrcidHtml('0000-0002-1825-0097', true),
 };
 
 /**
  * Format expertise terms as HTML for editor preview.
  *
  * @param {Array<{url?: string, label?: string}>} expertise Expertise terms.
- * @return {string}
+ * @return {string} Expertise markup, or '' when empty.
  */
 function formatExpertiseHtml(expertise) {
 	if (!Array.isArray(expertise) || expertise.length === 0) {
@@ -64,7 +77,7 @@ function formatExpertiseHtml(expertise) {
  * Format name and job title as HTML for editor preview.
  *
  * @param {Record<string, unknown>} staffInfo Staff REST staffInfo object.
- * @return {string|null}
+ * @return {string|null} Markup, or null when name or job title is missing.
  */
 function formatNameAndJobTitle(staffInfo) {
 	const name = staffInfo?.staffName;
@@ -84,10 +97,10 @@ function formatNameAndJobTitle(staffInfo) {
 /**
  * Resolve a live editor value from a staff REST record.
  *
- * @param {Record<string, unknown>} staffInfo Staff REST staffInfo object.
- * @param {Record<string, unknown>} sourceArgs Binding source args.
- * @param {string} attributeName Bound block attribute name.
- * @return {string|null}
+ * @param {Record<string, unknown>} staffInfo     Staff REST staffInfo object.
+ * @param {Record<string, unknown>} sourceArgs    Binding source args.
+ * @param {string}                  attributeName Bound block attribute name.
+ * @return {string|null} Live value, or null when the staff record lacks it.
  */
 function resolveLiveValue(staffInfo, sourceArgs, attributeName) {
 	if (!staffInfo) {
@@ -110,12 +123,14 @@ function resolveLiveValue(staffInfo, sourceArgs, attributeName) {
 		}
 		if ('title' === attributeName && staffInfo.staffName) {
 			return sprintf(
+				/* translators: %s: staff member name. */
 				__('Photo of %s', 'prc-staff-bylines'),
 				staffInfo.staffName
 			);
 		}
 		if ('alt' === attributeName && staffInfo.staffName) {
 			return sprintf(
+				/* translators: %s: staff member name. */
 				__("Download %s's photo", 'prc-staff-bylines'),
 				staffInfo.staffName
 			);
@@ -133,6 +148,7 @@ function resolveLiveValue(staffInfo, sourceArgs, attributeName) {
 		staffInfo.staffName
 	) {
 		return sprintf(
+			/* translators: %s: staff member name. */
 			__("Download %s's photo", 'prc-staff-bylines'),
 			staffInfo.staffName
 		);
@@ -177,15 +193,22 @@ function resolveLiveValue(staffInfo, sourceArgs, attributeName) {
 		return formatNameAndJobTitle(staffInfo);
 	}
 
+	if ('orcid' === valueToFetch && staffInfo.staffOrcid) {
+		return formatOrcidHtml(
+			staffInfo.staffOrcid,
+			true === staffInfo.staffOrcidAuthenticated
+		);
+	}
+
 	return null;
 }
 
 /**
  * Resolve editor preview values for a bound attribute.
  *
- * @param {Record<string, unknown>} sourceArgs Binding source args.
- * @param {string} attributeName Bound block attribute name.
- * @return {string|null}
+ * @param {Record<string, unknown>} sourceArgs    Binding source args.
+ * @param {string}                  attributeName Bound block attribute name.
+ * @return {string|null} Placeholder value, or null for unsupported attributes.
  */
 function resolvePreviewValue(sourceArgs, attributeName) {
 	const valueToFetch = sourceArgs?.valueToFetch;

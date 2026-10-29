@@ -1,10 +1,11 @@
 <?php
-declare(strict_types=1);
 /**
  * Staff class.
  *
  * @package PRC\Platform\Staff_Bylines
  */
+
+declare(strict_types=1);
 
 namespace PRC\Platform\Staff_Bylines;
 
@@ -83,6 +84,20 @@ class Staff {
 	 * @var string|false
 	 */
 	public string|false $job_title_extended = false;
+
+	/**
+	 * The ORCID iD of the staff member.
+	 *
+	 * @var string|false
+	 */
+	public string|false $orcid = false;
+
+	/**
+	 * Whether ORCID confirmed the staff member's ORCID iD.
+	 *
+	 * @var bool
+	 */
+	public bool $orcid_authenticated = false;
 
 	/**
 	 * The photo of the staff member.
@@ -380,6 +395,8 @@ class Staff {
 					'job_title'             => $helper->get_job_title( (int) $staff_post->ID ),
 					'job_title_extended'    => $helper->get_job_title_extended( (int) $staff_post->ID ),
 					'is_currently_employed' => $helper->is_currently_employed,
+					'orcid'                 => $helper->get_orcid( (int) $staff_post->ID ),
+					'orcid_authenticated'   => Orcid::is_authenticated( (int) $staff_post->ID ),
 				);
 			}
 		}
@@ -399,6 +416,8 @@ class Staff {
 			'job_title'             => $is_guest_author ? 'Guest Author' : 'Guest Contributor',
 			'job_title_extended'    => '',
 			'is_currently_employed' => (bool) $is_guest_author,
+			'orcid'                 => false,
+			'orcid_authenticated'   => false,
 		);
 	}
 
@@ -427,6 +446,8 @@ class Staff {
 		$this->bio                   = apply_filters( 'the_content', $staff_post->post_content );
 		$this->job_title             = $this->get_job_title( $staff_post_id );
 		$this->job_title_extended    = $this->get_job_title_extended( $staff_post_id );
+		$this->orcid                 = $this->get_orcid( $staff_post_id );
+		$this->orcid_authenticated   = Orcid::is_authenticated( $staff_post_id );
 		$this->mini_bio              = ! empty( $this->job_title_extended ) ? wp_sprintf(
 			'<a href="%1$s">%2$s</a> <span>is %3$s</span>.',
 			$this->link,
@@ -464,6 +485,8 @@ class Staff {
 		$this->bio                   = '';
 		$this->job_title             = $is_guest_author ? 'Guest Author' : 'Guest Contributor';
 		$this->job_title_extended    = '';
+		$this->orcid                 = false;
+		$this->orcid_authenticated   = false;
 		$this->mini_bio              = '';
 		$this->photo                 = false;
 		$this->social_profiles       = array();
@@ -531,6 +554,17 @@ class Staff {
 			$job_title_extended = preg_replace( '/\b(a|an) /', 'a former ', $job_title_extended );
 		}
 		return $job_title_extended;
+	}
+
+	/**
+	 * Returns the stored ORCID iD for the staff member.
+	 *
+	 * @param int $staff_post_id The staff post ID.
+	 * @return string|false The canonical ORCID iD, or false when unset.
+	 */
+	public function get_orcid( int $staff_post_id ): string|false {
+		$orcid = get_post_meta( $staff_post_id, 'orcid', true );
+		return is_string( $orcid ) && '' !== $orcid ? $orcid : false;
 	}
 
 	/**

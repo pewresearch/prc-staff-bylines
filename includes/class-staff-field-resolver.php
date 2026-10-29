@@ -1,10 +1,11 @@
 <?php
-declare(strict_types=1);
 /**
  * Resolves staff field values for bindings and block bits.
  *
  * @package PRC\Platform\Staff_Bylines
  */
+
+declare(strict_types=1);
 
 namespace PRC\Platform\Staff_Bylines;
 
@@ -87,6 +88,11 @@ class Staff_Field_Resolver {
 				'label' => __( 'Download Photo URL', 'prc-staff-bylines' ),
 				'type'  => 'string',
 				'args'  => array( 'valueToFetch' => 'photo-full' ),
+			),
+			array(
+				'label' => __( 'ORCID iD', 'prc-staff-bylines' ),
+				'type'  => 'string',
+				'args'  => array( 'valueToFetch' => 'orcid' ),
 			),
 		);
 	}
@@ -220,6 +226,11 @@ class Staff_Field_Resolver {
 		}
 		if ( 'expertise' === $value_to_fetch && empty( $staff_record['expertise'] ) ) {
 			$value_to_replace = '';
+		}
+		if ( 'orcid' === $value_to_fetch ) {
+			$value_to_replace = empty( $staff_record['orcid'] )
+				? ''
+				: Orcid::render_link( $staff_record['orcid'], true === $staff_record['orcid_authenticated'] );
 		}
 		if ( 'name_and_job_title' === $value_to_fetch && ! empty( $staff_record['name'] ) && ! empty( $staff_record['job_title'] ) ) {
 			$name      = $staff_record['name'];
