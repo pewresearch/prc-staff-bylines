@@ -77,6 +77,11 @@ export const STAFF_INFO_BINDING_FIELDS = [
 		type: 'string',
 		args: { valueToFetch: 'orcid' },
 	},
+	{
+		label: __('ORCID iD icon', 'prc-staff-bylines'),
+		type: 'string',
+		args: { valueToFetch: 'orcid-icon' },
+	},
 ];
 
 /**

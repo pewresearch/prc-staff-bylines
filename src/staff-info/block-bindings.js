@@ -17,8 +17,13 @@ import { STAFF_PHOTO_PLACEHOLDER_DATA_URI } from './placeholders';
  */
 function formatOrcidHtml(id, authenticated) {
 	const status = authenticated ? 'is-authenticated' : 'is-unauthenticated';
-	return `<a class="wp-block-prc-block-staff-context-provider__orcid ${status}" href="https://orcid.org/${id}" rel="me">${id}</a>`;
+	const unauthenticatedLabel = authenticated
+		? ''
+		: ` <span class="wp-block-prc-block-staff-context-provider__orcid-status">${__('(unauthenticated)', 'prc-staff-bylines')}</span>`;
+	return `<a class="wp-block-prc-block-staff-context-provider__orcid ${status}" href="https://orcid.org/${id}" rel="me">${id}</a>${unauthenticatedLabel}`;
 }
+
+const ORCID_ICON_NAME = 'brands/orcid';
 
 const PLACEHOLDERS = {
 	name: __('Staff Name', 'prc-staff-bylines'),
@@ -154,6 +159,12 @@ function resolveLiveValue(staffInfo, sourceArgs, attributeName) {
 		);
 	}
 
+	if ('orcid-icon' === valueToFetch) {
+		return 'icon' === attributeName && staffInfo.staffOrcid
+			? ORCID_ICON_NAME
+			: null;
+	}
+
 	if ('content' !== attributeName) {
 		return null;
 	}
@@ -240,6 +251,10 @@ function resolvePreviewValue(sourceArgs, attributeName) {
 		return PLACEHOLDERS['photo-full-download-text'];
 	}
 
+	if ('orcid-icon' === valueToFetch) {
+		return 'icon' === attributeName ? ORCID_ICON_NAME : null;
+	}
+
 	if ('content' !== attributeName) {
 		return null;
 	}
@@ -277,8 +292,13 @@ defineBindingSource({
 			const live = staffInfo
 				? resolveLiveValue(staffInfo, sourceArgs, attributeName)
 				: null;
+			const skipPreview =
+				staffInfo && 'orcid-icon' === sourceArgs.valueToFetch;
 			const preview =
-				live ?? resolvePreviewValue(sourceArgs, attributeName);
+				live ??
+				(skipPreview
+					? null
+					: resolvePreviewValue(sourceArgs, attributeName));
 
 			if (null !== preview) {
 				values[attributeName] = preview;

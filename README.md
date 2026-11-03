@@ -134,6 +134,7 @@ Two scripts are enqueued via `enqueue_block_editor_assets`:
 | `enqueue_block_editor_assets`              | Action    | Enqueues the bylines and staff inspector sidebar panel scripts.                                                                                       |
 | `admin_post_prc_orcid_authorize`           | Action    | Starts ORCID OAuth for a staff post. See [ORCID iD](#orcid-id).                                                                                       |
 | `admin_post_prc_orcid_callback`            | Action    | Finishes ORCID OAuth and stores the confirmed iD.                                                                                                     |
+| `render_block_core/icon`                   | Filter    | Colors and labels an `core/icon` block bound to the ORCID iD icon.                                                                                    |
 | `render_block_core/paragraph`              | Filter    | Removes a paragraph bound to the ORCID iD when the staff member has no iD.                                                                            |
 
 ## WP-CLI commands
@@ -174,6 +175,8 @@ In the ORCID developer tools, register `admin-post.php?action=prc_orcid_callback
 | `PRC_PLATFORM_ORCID_CLIENT_ID`     | ORCID public API client ID. The button is disabled when empty.        |
 | `PRC_PLATFORM_ORCID_CLIENT_SECRET` | ORCID public API client secret. The button is disabled when empty.    |
 | `PRC_PLATFORM_ORCID_ENVIRONMENT`   | `sandbox` uses `sandbox.orcid.org`. Any other value uses `orcid.org`. |
+
+The **ORCID iD icon** binding field (`valueToFetch: orcid-icon`) fills the `icon` attribute of a `core/icon` block with `brands/orcid` when the staff member has an iD. It is grayscale when the iD is unauthenticated, and resolves to nothing when there is no iD. A `render_block_core/icon` filter colors the mark (glyph `#a6ce39`, background `#ffffff`, round) and sets `role="img"` and `aria-label="ORCID iD"`. The plugin enables bindings on `core/icon` `icon` through `block_bindings_supported_attributes_core/icon`, because WordPress 7.1 does not.
 
 The **ORCID iD** binding field (`valueToFetch: orcid`) renders the iD as a link. The link has the class `wp-block-prc-block-staff-context-provider__orcid` plus `is-authenticated` or `is-unauthenticated`. The `prc-staff-bylines/staff-orcid` pattern and the `taxonomy-bylines` theme template use this field.
 

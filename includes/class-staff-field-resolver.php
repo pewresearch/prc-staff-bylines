@@ -94,6 +94,11 @@ class Staff_Field_Resolver {
 				'type'  => 'string',
 				'args'  => array( 'valueToFetch' => 'orcid' ),
 			),
+			array(
+				'label' => __( 'ORCID iD icon', 'prc-staff-bylines' ),
+				'type'  => 'string',
+				'args'  => array( 'valueToFetch' => 'orcid-icon' ),
+			),
 		);
 	}
 
@@ -134,7 +139,7 @@ class Staff_Field_Resolver {
 	 * @return mixed
 	 */
 	public static function resolve_binding_value( array $staff_record, array $source_args, string $block_name, string $attribute_name ): mixed {
-		if ( ! in_array( $block_name, array( 'core/image', 'core/paragraph', 'core/heading', 'core/button' ), true ) ) {
+		if ( ! in_array( $block_name, array( 'core/image', 'core/paragraph', 'core/heading', 'core/button', 'core/icon' ), true ) ) {
 			return null;
 		}
 
@@ -231,6 +236,11 @@ class Staff_Field_Resolver {
 			$value_to_replace = empty( $staff_record['orcid'] )
 				? ''
 				: Orcid::render_link( $staff_record['orcid'], true === $staff_record['orcid_authenticated'] );
+		}
+		if ( 'orcid-icon' === $value_to_fetch && 'icon' === $attribute_name ) {
+			$value_to_replace = ! empty( $staff_record['orcid'] )
+				? Orcid::ICON_NAME
+				: '';
 		}
 		if ( 'name_and_job_title' === $value_to_fetch && ! empty( $staff_record['name'] ) && ! empty( $staff_record['job_title'] ) ) {
 			$name      = $staff_record['name'];

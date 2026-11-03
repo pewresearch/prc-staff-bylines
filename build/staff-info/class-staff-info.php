@@ -64,6 +64,9 @@ class Staff_Info {
 			$loader->add_action( 'init', $this, 'register_assets' );
 			$loader->add_action( 'enqueue_block_editor_assets', $this, 'register_editor_script' );
 			$loader->add_filter( 'render_block_core/paragraph', $this, 'remove_empty_orcid_paragraph', 10, 2 );
+			$loader->add_filter( 'render_block_core/group', $this, 'remove_empty_orcid_group', 10, 2 );
+			$loader->add_filter( 'block_bindings_supported_attributes_core/icon', $this, 'enable_icon_binding' );
+			$loader->add_filter( 'render_block_core/icon', $this, 'style_orcid_icon', 10, 2 );
 		}
 	}
 
@@ -86,6 +89,100 @@ class Staff_Info {
 			return '';
 		}
 		return (string) $block_content;
+	}
+
+	/**
+	 * Drop groups wrapping an ORCID iD paragraph when the staff member has none.
+	 *
+	 * @hook render_block_core/group
+	 * @param string $block_content Rendered block HTML.
+	 * @param array  $block         Parsed block.
+	 * @return string
+	 */
+	public function remove_empty_orcid_group( $block_content, $block ): string {
+		foreach ( $block['innerBlocks'] ?? array() as $inner_block ) {
+			$binding = $inner_block['attrs']['metadata']['bindings']['content'] ?? null;
+			if (
+				'core/paragraph' === ( $inner_block['blockName'] ?? null )
+				&& is_array( $binding )
+				&& 'prc-platform/staff-info' === ( $binding['source'] ?? null )
+				&& 'orcid' === ( $binding['args']['valueToFetch'] ?? null )
+				&& '' === trim( wp_strip_all_tags( (string) $block_content ) )
+				&& ! str_contains( (string) $block_content, '<svg' )
+			) {
+				return '';
+			}
+		}
+		return (string) $block_content;
+	}
+
+	/**
+	 * Allow block bindings on the `icon` attribute of `core/icon`.
+	 *
+	 * Core adds this in WordPress 7.2. Remove once 7.2 is the minimum version.
+	 *
+	 * @hook block_bindings_supported_attributes_core/icon
+	 * @param array $supported_attributes Supported attributes.
+	 * @return array
+	 */
+	public function enable_icon_binding( $supported_attributes ): array {
+		$supported_attributes = (array) $supported_attributes;
+		if ( ! in_array( 'icon', $supported_attributes, true ) ) {
+			$supported_attributes[] = 'icon';
+		}
+		return $supported_attributes;
+	}
+
+	/**
+	 * Color and label an icon block bound to the ORCID iD icon.
+	 *
+	 * The binding only fills `icon` when the staff member has an iD, so an empty
+	 * render means there is nothing to style. The mark is a disc with an "iD"
+	 * cut-out: the glyph color paints the disc and the background shows through
+	 * the cut-out. An unauthenticated iD gets the same mark in grayscale.
+	 *
+	 * @hook render_block_core/icon
+	 * @param string $block_content Rendered block HTML.
+	 * @param array  $block         Parsed block.
+	 * @return string
+	 */
+	public function style_orcid_icon( $block_content, $block ): string {
+		$block_content = (string) $block_content;
+		$binding       = $block['attrs']['metadata']['bindings']['icon'] ?? null;
+		if (
+			'' === $block_content
+			|| ! is_array( $binding )
+			|| 'prc-platform/staff-info' !== ( $binding['source'] ?? null )
+			|| 'orcid-icon' !== ( $binding['args']['valueToFetch'] ?? null )
+		) {
+			return $block_content;
+		}
+
+		$processor = new \WP_HTML_Tag_Processor( $block_content );
+		if ( ! $processor->next_tag( 'svg' ) ) {
+			return $block_content;
+		}
+
+		$authenticated = is_array( $this->block_bound_staff ) && true === ( $this->block_bound_staff['orcid_authenticated'] ?? false );
+
+		$existing = trim( (string) $processor->get_attribute( 'style' ) );
+		$existing = '' === $existing ? '' : rtrim( $existing, ';' ) . ';';
+		$processor->set_attribute(
+			'style',
+			sprintf(
+				'%1$scolor:%2$s;background-color:%3$s;border-radius:50%%%4$s',
+				$existing,
+				Orcid::ICON_GLYPH_COLOR,
+				Orcid::ICON_BACKGROUND_COLOR,
+				$authenticated ? '' : ';filter:grayscale(1)'
+			)
+		);
+		$processor->remove_attribute( 'aria-hidden' );
+		$processor->remove_attribute( 'focusable' );
+		$processor->set_attribute( 'role', 'img' );
+		$processor->set_attribute( 'aria-label', $authenticated ? __( 'ORCID iD', 'prc-staff-bylines' ) : __( 'ORCID iD (unauthenticated)', 'prc-staff-bylines' ) );
+
+		return $processor->get_updated_html();
 	}
 
 	/**

@@ -39,6 +39,27 @@ class Orcid {
 	private const STATE_TRANSIENT_PREFIX = 'prc_orcid_state_';
 
 	/**
+	 * Registered icon name of the ORCID iD mark in prc-icon-library.
+	 *
+	 * @var string
+	 */
+	public const ICON_NAME = 'brands/orcid';
+
+	/**
+	 * ORCID brand green. The mark's disc is drawn in this color.
+	 *
+	 * @var string
+	 */
+	public const ICON_GLYPH_COLOR = '#a6ce39';
+
+	/**
+	 * Color behind the mark. It shows through the "iD" cut-out.
+	 *
+	 * @var string
+	 */
+	public const ICON_BACKGROUND_COLOR = '#ffffff';
+
+	/**
 	 * Script handle of the staff inspector sidebar panel.
 	 *
 	 * @var string
@@ -160,10 +181,11 @@ class Orcid {
 	 */
 	public static function render_link( string $id, bool $authenticated ): string {
 		return sprintf(
-			'<a class="wp-block-prc-block-staff-context-provider__orcid %1$s" href="%2$s" rel="me">%3$s</a>',
+			'<a class="wp-block-prc-block-staff-context-provider__orcid %1$s" href="%2$s" rel="me">%3$s</a>%4$s',
 			$authenticated ? 'is-authenticated' : 'is-unauthenticated',
 			esc_url( self::url( $id ) ),
-			esc_html( $id )
+			esc_html( $id ),
+			$authenticated ? '' : ' <span class="wp-block-prc-block-staff-context-provider__orcid-status">' . esc_html__( '(unauthenticated)', 'prc-staff-bylines' ) . '</span>'
 		);
 	}
 
