@@ -51,13 +51,6 @@ class Staff {
 	public string|false $link = false;
 
 	/**
-	 * The user ID of the staff member.
-	 *
-	 * @var int|string|false
-	 */
-	public int|string|false $user_id = false;
-
-	/**
 	 * The bio of the staff member.
 	 *
 	 * @var string
@@ -258,7 +251,10 @@ class Staff {
 		$cache = wp_cache_get( $post_id, 'staff_data' );
 		if ( false !== $cache && is_array( $cache ) && array_key_exists( 'ID', $cache ) && ! is_user_logged_in() ) {
 			foreach ( $cache as $key => $value ) {
-				$this->$key = $value;
+				// Entries written before a property was removed must not create dynamic properties.
+				if ( property_exists( $this, $key ) ) {
+					$this->$key = $value;
+				}
 			}
 			if ( ! array_key_exists( 'wp_user', $cache ) ) {
 				$this->wp_user = false;
@@ -441,7 +437,6 @@ class Staff {
 		$this->name                  = $staff_post->post_title;
 		$this->slug                  = $staff_post->post_name;
 		$this->link                  = $this->get_staff_link( $staff_post_id );
-		$this->user_id               = get_post_meta( $staff_post_id, 'user_id', true );
 		$this->is_currently_employed = $this->check_employment_status( $staff_post_id );
 		$this->bio                   = apply_filters( 'the_content', $staff_post->post_content );
 		$this->job_title             = $this->get_job_title( $staff_post_id );
@@ -480,7 +475,6 @@ class Staff {
 		$this->slug                  = $term->slug;
 		$guest_link                  = $is_guest_author ? get_term_link( $term_id, 'bylines' ) : false;
 		$this->link                  = is_string( $guest_link ) ? $guest_link : false;
-		$this->user_id               = false;
 		$this->is_currently_employed = (bool) $is_guest_author;
 		$this->bio                   = '';
 		$this->job_title             = $is_guest_author ? 'Guest Author' : 'Guest Contributor';
@@ -652,15 +646,11 @@ class Staff {
 		if ( false === $staff_post_id ) {
 			return false;
 		}
-		$assigned_user = get_post_meta( $staff_post_id, '_wp_user', true );
-		if ( ! empty( $assigned_user ) ) {
+		$user_id = Staff_User_Link::user_id_for_staff( (int) $staff_post_id );
+		if ( null === $user_id ) {
 			return false;
 		}
-		$user = get_userdata( $assigned_user );
-		if ( false === $user ) {
-			return false;
-		}
-		return $user;
+		return get_userdata( $user_id );
 	}
 
 	/**

@@ -64,7 +64,7 @@ class Orcid {
 	 *
 	 * @var string
 	 */
-	private const EDITOR_SCRIPT_HANDLE = 'prc-staff-bylines-staff-inspector-sidebar-panel';
+	public const EDITOR_SCRIPT_HANDLE = 'prc-staff-bylines-staff-inspector-sidebar-panel';
 
 	/**
 	 * BroadcastChannel name shared by the callback page and the editor.
@@ -190,12 +190,58 @@ class Orcid {
 	}
 
 	/**
+	 * Whether the current user may authenticate the ORCID iD on a staff post:
+	 * an editor of the post, or the user the post is linked to.
+	 *
+	 * @param int $staff_id Staff post ID on the current site.
+	 * @return bool
+	 */
+	public static function can_authenticate( int $staff_id ): bool {
+		if ( $staff_id <= 0 || 'staff' !== get_post_type( $staff_id ) ) {
+			return false;
+		}
+		if ( current_user_can( 'edit_post', $staff_id ) ) {
+			return true;
+		}
+		$user_id = get_current_user_id();
+		return $user_id > 0 && Staff_User_Link::user_id_for_staff( $staff_id ) === $user_id;
+	}
+
+	/**
+	 * Start URL of the OAuth flow, without the staff ID and nonce.
+	 *
+	 * Always on the primary site, where staff posts live, so a flow started
+	 * from another site's admin still reaches the redirect URI ORCID knows.
+	 *
+	 * @return string
+	 */
+	public static function get_authorize_url(): string {
+		return get_admin_url( Staff_User_Link::primary_site_id(), 'admin-post.php?action=prc_orcid_authorize' );
+	}
+
+	/**
+	 * Start URL of the OAuth flow for a staff post, with a fresh nonce.
+	 *
+	 * @param int $staff_id Staff post ID.
+	 * @return string
+	 */
+	public static function get_authorize_url_for( int $staff_id ): string {
+		return add_query_arg(
+			array(
+				'staffId'  => $staff_id,
+				'_wpnonce' => wp_create_nonce( self::NONCE_ACTION ),
+			),
+			self::get_authorize_url()
+		);
+	}
+
+	/**
 	 * OAuth redirect URI registered with ORCID.
 	 *
 	 * @return string
 	 */
 	private static function get_redirect_uri(): string {
-		return admin_url( 'admin-post.php?action=prc_orcid_callback' );
+		return get_admin_url( Staff_User_Link::primary_site_id(), 'admin-post.php?action=prc_orcid_callback' );
 	}
 
 	/**
@@ -211,8 +257,8 @@ class Orcid {
 		if ( ! wp_verify_nonce( $nonce, self::NONCE_ACTION ) ) {
 			$this->render_result( 'error', __( 'This link has expired. Reload the editor and try again.', 'prc-staff-bylines' ), '', $staff_id );
 		}
-		if ( 0 === $staff_id || 'staff' !== get_post_type( $staff_id ) || ! current_user_can( 'edit_post', $staff_id ) ) {
-			$this->render_result( 'error', __( 'You cannot edit this staff profile.', 'prc-staff-bylines' ), '', $staff_id );
+		if ( ! self::can_authenticate( $staff_id ) ) {
+			$this->render_result( 'error', __( 'You cannot authenticate an ORCID iD for this staff profile.', 'prc-staff-bylines' ), '', $staff_id );
 		}
 		if ( ! self::is_configured() ) {
 			$this->render_result( 'error', __( 'ORCID API credentials are not configured.', 'prc-staff-bylines' ), '', $staff_id );
@@ -267,8 +313,8 @@ class Orcid {
 		$staff_id = is_array( $stored ) ? (int) ( $stored['staff_id'] ?? 0 ) : 0;
 		$user_id  = is_array( $stored ) ? (int) ( $stored['user_id'] ?? 0 ) : 0;
 
-		if ( 0 === $staff_id || get_current_user_id() !== $user_id || ! current_user_can( 'edit_post', $staff_id ) ) {
-			$this->render_result( 'error', __( 'This ORCID sign-in request is invalid or has expired. Try again from the staff editor.', 'prc-staff-bylines' ), '', $staff_id );
+		if ( 0 === $staff_id || get_current_user_id() !== $user_id || ! self::can_authenticate( $staff_id ) ) {
+			$this->render_result( 'error', __( 'This ORCID sign-in request is invalid or has expired. Try again.', 'prc-staff-bylines' ), '', $staff_id );
 		}
 		if ( '' !== $error ) {
 			$this->render_result( 'error', __( 'ORCID sign-in was cancelled or denied.', 'prc-staff-bylines' ), '', $staff_id );
@@ -347,7 +393,7 @@ class Orcid {
 			'orcid'   => $orcid,
 			'message' => $message,
 		);
-		$edit_link = $staff_id > 0 ? get_edit_post_link( $staff_id, 'raw' ) : null;
+		$edit_link = $staff_id > 0 && current_user_can( 'edit_post', $staff_id ) ? get_edit_post_link( $staff_id, 'raw' ) : null;
 
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=utf-8' );
@@ -395,7 +441,7 @@ class Orcid {
 			'window.prcStaffOrcid = ' . wp_json_encode(
 				array(
 					'configured'   => self::is_configured(),
-					'authorizeUrl' => admin_url( 'admin-post.php?action=prc_orcid_authorize' ),
+					'authorizeUrl' => self::get_authorize_url(),
 					'nonce'        => wp_create_nonce( self::NONCE_ACTION ),
 					'baseUrl'      => self::get_base_url(),
 					'channel'      => self::BROADCAST_CHANNEL,

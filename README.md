@@ -51,6 +51,7 @@ add_filter( 'prc_platform__bylines_enabled_post_types', function( $types ) {
 | `jobTitleExtended`     | `string`  | Mini-biography sentence fragment, e.g. "is a Senior Researcher…".                                               |
 | `orcid`                | `string`  | ORCID iD in `XXXX-XXXX-XXXX-XXXX` form, or `''`. Saving any other value stores `''`. See [ORCID iD](#orcid-id). |
 | `_orcid_authenticated` | `string`  | Protected, not in REST. The iD that ORCID OAuth confirmed. Only the OAuth callback writes it.                   |
+| `_wp_user`             | `integer` | Protected. ID of the linked WordPress user, or unset. See [Linked WordPress user](#linked-wordpress-user).      |
 | `bylineLinkEnabled`    | `boolean` | Controls whether a public byline link and archive page are exposed.                                             |
 | `socialProfiles`       | `array`   | Array of `{key, url}` social profile objects.                                                                   |
 | `_maelstrom`           | `object`  | `{enabled: bool, restricted: string[]}` — staff safety net. See [Maelstrom](#maelstrom).                        |
@@ -90,6 +91,8 @@ add_filter( 'prc_platform__bylines_enabled_post_types', function( $types ) {
   "staffOrcidAuthenticated": true
 }
 ```
+
+`wpUser` is a REST field on `staff` posts in the `edit` context. It holds the linked WordPress user as `{ "id": 42, "name": "Jane Smith" }`, or `{ "id": 0, "name": "" }` when there is no link. Send `{ "wpUser": { "id": 42 } }` to link and `{ "wpUser": { "id": 0 } }` to unlink. Writes need `list_users`. A user that does not exist returns `400 prc_staff_user_missing`. A user linked to another staff record returns `409 prc_staff_user_taken`.
 
 **Collection ordering:**
 
@@ -145,6 +148,12 @@ wp prc bylines guest-authors create --first=<first> --last=<last> [--middle=<mid
 
 Creates a `bylines` term for an external contributor who has no `staff` post. Dry-run is enabled by default; pass `--dry-run=false` to execute. Checks for an existing term before creating.
 
+```
+wp prc-staff link-users [--dry-run]
+```
+
+Links current staff records that have no user to users of the primary site that have no staff record. It matches the legacy `user_id` staff meta first, then the user's first and last name, then the display name. Names compare without case and with collapsed whitespace. It prints a table of every match, ambiguous case, and miss, and writes only exact, unique matches. A user that matches two staff records is ambiguous for both. Former staff are skipped. Run it with `--dry-run` first.
+
 ## Maelstrom
 
 `_maelstrom` is a staff-level safety net that automatically removes a staff member's byline from a post at publish time if the post is tagged with regions or countries the staff member has marked as restricted. This is intentionally obfuscated in the codebase to reduce exposure of the feature's purpose.
@@ -160,6 +169,19 @@ Configure via the `_maelstrom` post meta on the `staff` post:
 
 The `enabled` flag is computed at publish time based on whether the post's `regions-countries` terms overlap with `restricted`. Do not rely on the stored `enabled` value at rest.
 
+## Linked WordPress user
+
+A staff record can link to one WordPress user, and a user can link to one staff record. The link lives once, in the `_wp_user` meta on the staff post. Staff posts live on the primary site (`PRC_PRIMARY_SITE_ID`), so every lookup switches to that site.
+
+- `Staff_User_Link::user_id_for_staff( $staff_id )` returns the user ID or `null`.
+- `Staff_User_Link::staff_id_for_user( $user_id )` returns the staff post ID or `null`. It caches the answer in the `staff_user_link` object-cache group. A cached ID is checked against the staff post's meta on read, and writes to `_wp_user` clear the entry.
+- `Staff_User_Link::link( $staff_id, $user_id )` validates and writes the link. Pass `0` to unlink.
+- `$staff->get_wp_user()` returns the linked `WP_User` or `false`.
+
+Editors set the link in the **WordPress User** panel of the staff sidebar. Only users with `list_users` can change it. The user search uses the core users endpoint, so it finds only members of the primary site.
+
+The link is a REST field (`wpUser`), not REST meta. The staff sidebar panels send every registered meta key on each save, and core re-checks the auth callback for a meta key whenever the value it receives differs from the stored value. As REST meta, the link would make saves fail for editors who cannot list users.
+
 ## ORCID iD
 
 Staff posts store an ORCID iD in the `orcid` meta. `Orcid::parse()` accepts a bare iD, a compact iD, or an `orcid.org` profile URL. It checks the ISO 7064 Mod 11-2 checksum and stores the hyphenated form. An invalid value is stored as `''`.
@@ -168,7 +190,15 @@ An iD is authenticated when `orcid` equals `_orcid_authenticated`. Nothing store
 
 To authenticate, an editor clicks **Authenticate with ORCID** in the staff sidebar. A popup opens `admin-post.php?action=prc_orcid_authorize`, which redirects to ORCID with the `/authenticate` scope. The staff member signs in to ORCID. ORCID then redirects to `admin-post.php?action=prc_orcid_callback`. The callback checks the single-use state, exchanges the code for the iD, and writes both meta keys. It does not store the access token. The popup sends the result to the editor on the `prc-orcid-auth` BroadcastChannel and closes. It does not use `window.opener`, because the ORCID round trip can sever it.
 
-In the ORCID developer tools, register `admin-post.php?action=prc_orcid_callback` under the site admin URL as the redirect URI.
+`Orcid::can_authenticate( $staff_id )` decides who can start and finish the flow. It allows users who can edit the staff post and the WordPress user linked to it. A linked user who cannot edit the post does not see the edit link on the result page.
+
+The flow always runs on the primary site, so the authorize URL and the redirect URI use the primary site admin URL. In the ORCID developer tools, register `admin-post.php?action=prc_orcid_callback` under the primary site admin URL as the redirect URI.
+
+### ORCID in the welcome splash
+
+When ORCID is configured, the plugin adds an optional `orcid` step to the `prc-wp-admin-tours` welcome splash through `prc_wp_admin_tours_setup_fields`. The step uses the `popup_connect` field type. It shows a **Connect ORCID** button that opens the same OAuth popup for the user's linked staff record, and an **I don't have an ORCID iD** link.
+
+The step is complete when the user has no linked staff record, when the linked iD is authenticated, or when the user chose **I don't have an ORCID iD**. That choice is stored as a setup acknowledgment, so the splash does not ask again. `includes/class-orcid-setup-field.php` owns the step.
 
 | Environment variable               | Description                                                           |
 | ---------------------------------- | --------------------------------------------------------------------- |
@@ -222,25 +252,29 @@ $bylines->format( 'html' );   // same with <a> or <span> per-author, comma/and s
 
 ## Key files
 
-| File                                        | Purpose                                                                                                           |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `prc-staff-bylines.php`                     | Plugin entry point. Defines constants, registers activation/deactivation hooks, boots Bootstrap.                  |
-| `includes/class-bootstrap.php`              | Wires all classes and blocks to the loader, manages editor asset enqueueing.                                      |
-| `includes/class-content-type.php`           | Registers the `staff` CPT, `bylines`, `areas-of-expertise`, and `staff-type` taxonomies. Registers all post meta. |
-| `includes/class-staff.php`                  | `Staff` data object. Resolves staff members from post ID or term ID, with object cache support.                   |
-| `includes/class-bylines.php`                | `Bylines` data object. Fetches and formats bylines for a given post.                                              |
-| `includes/class-rest-api.php`               | Registers the `staffInfo` field on `bylines` terms and `staff` posts.                                             |
-| `includes/class-orcid.php`                  | Parses and renders ORCID iDs and runs the ORCID OAuth flow.                                                       |
-| `includes/class-seo.php`                    | Integrates with Yoast SEO for author meta and robots directives.                                                  |
-| `includes/class-maelstrom.php`              | Enforces staff safety net on publish via `prc_platform_on_publish`.                                               |
-| `includes/class-guest-author-commands.php`  | WP-CLI command for creating guest-author byline terms.                                                            |
-| `includes/bylines-inspector-sidebar-panel/` | Editor panel for managing bylines on posts.                                                                       |
-| `includes/staff-inspector-sidebar-panel/`   | Editor panel for managing staff-specific meta on `staff` posts.                                                   |
-| `src/bylines-query/`                        | Block: `prc-block/bylines-query`.                                                                                 |
-| `src/bylines-display/`                      | Block: `prc-block/bylines-display`.                                                                               |
-| `src/staff-context-provider/`               | Block: `prc-block/staff-context-provider`.                                                                        |
-| `src/staff-query/`                          | Block: `prc-block/staff-query`.                                                                                   |
-| `src/staff-info/`                           | Block: `prc-block/staff-info`.                                                                                    |
+| File                                          | Purpose                                                                                                           |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `prc-staff-bylines.php`                       | Plugin entry point. Defines constants, registers activation/deactivation hooks, boots Bootstrap.                  |
+| `includes/class-bootstrap.php`                | Wires all classes and blocks to the loader, manages editor asset enqueueing.                                      |
+| `includes/class-content-type.php`             | Registers the `staff` CPT, `bylines`, `areas-of-expertise`, and `staff-type` taxonomies. Registers all post meta. |
+| `includes/class-staff.php`                    | `Staff` data object. Resolves staff members from post ID or term ID, with object cache support.                   |
+| `includes/class-bylines.php`                  | `Bylines` data object. Fetches and formats bylines for a given post.                                              |
+| `includes/class-rest-api.php`                 | Registers the `staffInfo` field on `bylines` terms and `staff` posts.                                             |
+| `includes/class-orcid.php`                    | Parses and renders ORCID iDs and runs the ORCID OAuth flow.                                                       |
+| `includes/class-orcid-setup-field.php`        | Adds the optional ORCID step to the welcome splash.                                                               |
+| `includes/class-staff-user-link.php`          | Stores, validates, and looks up the link between a staff record and a WordPress user.                             |
+| `includes/class-staff-user-matcher.php`       | Pure name matcher behind `wp prc-staff link-users`.                                                               |
+| `includes/class-staff-user-link-commands.php` | WP-CLI command `wp prc-staff link-users`.                                                                         |
+| `includes/class-seo.php`                      | Integrates with Yoast SEO for author meta and robots directives.                                                  |
+| `includes/class-maelstrom.php`                | Enforces staff safety net on publish via `prc_platform_on_publish`.                                               |
+| `includes/class-guest-author-commands.php`    | WP-CLI command for creating guest-author byline terms.                                                            |
+| `includes/bylines-inspector-sidebar-panel/`   | Editor panel for managing bylines on posts.                                                                       |
+| `includes/staff-inspector-sidebar-panel/`     | Editor panel for managing staff-specific meta on `staff` posts.                                                   |
+| `src/bylines-query/`                          | Block: `prc-block/bylines-query`.                                                                                 |
+| `src/bylines-display/`                        | Block: `prc-block/bylines-display`.                                                                               |
+| `src/staff-context-provider/`                 | Block: `prc-block/staff-context-provider`.                                                                        |
+| `src/staff-query/`                            | Block: `prc-block/staff-query`.                                                                                   |
+| `src/staff-info/`                             | Block: `prc-block/staff-info`.                                                                                    |
 
 ## Dependencies
 
