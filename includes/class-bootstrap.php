@@ -88,7 +88,6 @@ class Bootstrap {
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-bylines.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-seo.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-rest-api.php';
-		require_once plugin_dir_path( __DIR__ ) . '/includes/class-maelstrom.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-guest-author-commands.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-staff-user-link-commands.php';
 
@@ -152,7 +151,6 @@ class Bootstrap {
 		new Orcid( $this->get_loader() );
 		new Staff_User_Link( $this->get_loader() );
 		new Orcid_Setup_Field( $this->get_loader() );
-		new Maelstrom( $this->get_loader() );
 
 		if ( class_exists( 'Content_For_Agents\PRC_Bridge\LLMs_Txt' ) || class_exists( 'PRC\Platform\Markdown_For_Agents\LLMs_Txt' ) ) {
 			require_once plugin_dir_path( __DIR__ ) . '/includes/class-llms-txt-section.php';

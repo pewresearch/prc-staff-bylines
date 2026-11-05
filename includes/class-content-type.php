@@ -397,41 +397,6 @@ class Content_Type {
 			)
 		);
 
-		/**
-		 * MAELSTROM
-		 * This is a misnomer!!! As this field is publicly accessible we want to obfuscate what this is for. This is the "safety net" for staff members, this will allow us to hide staff members from certain posts based on that post's region and country taxonomy terms. This is a safety net for staff members and their families back home to ensure they are not targeted by bad actors by working on posts that are sensitive to their home country.
-		 */
-		register_post_meta(
-			self::$post_object_name,
-			'_maelstrom',
-			array(
-				'description'       => '',
-				'show_in_rest'      => array(
-					'schema' => array(
-						'properties' => array(
-							'enabled'    => array(
-								'type'    => 'boolean',
-								'default' => false,
-							),
-							'restricted' => array(
-								'type'  => 'array',
-								'items' => array(
-									'type'    => 'string',
-									'default' => array(),
-								),
-							),
-						),
-					),
-				),
-				'single'            => true,
-				'type'              => 'object',
-				'revisions_enabled' => true,
-				'auth_callback'     => function () {
-					return current_user_can( 'edit_posts' );
-				},
-			)
-		);
-
 		register_post_meta(
 			self::$post_object_name,
 			'socialProfiles',

@@ -78,13 +78,14 @@ class Orcid_Setup_Field {
 	 * Popup settings for the `popup_connect` control.
 	 *
 	 * @param WP_User $user User.
-	 * @return array{url:string,channel:string,buttonLabel:string,declineLabel:string}
+	 * @return array{url:string,channel:string,buttonLabel:string,declineLabel:string,icon:string}
 	 */
 	public static function value( WP_User $user ): array {
 		return array(
 			'url'          => Orcid::get_authorize_url_for( (int) Staff_User_Link::staff_id_for_user( $user->ID ) ),
 			'channel'      => Orcid::BROADCAST_CHANNEL,
 			'buttonLabel'  => __( 'Connect ORCID', 'prc-staff-bylines' ),
+			'icon'         => 'orcid',
 			'declineLabel' => __( "I don't have an ORCID iD", 'prc-staff-bylines' ),
 		);
 	}

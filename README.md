@@ -11,7 +11,6 @@ Staff profile and byline management system for the PRC Platform. Links a `staff`
 - Stores bylines, acknowledgements, and display flags as post meta on any post type that declares `prc-bylines` support.
 - Adds a `staffInfo` REST field to both `bylines` terms and `staff` posts, exposing a normalized staff data object to the editor and frontend consumers.
 - Redirects WordPress native author archives to 404s — the `bylines` taxonomy term archive serves as the canonical author page.
-- Applies Maelstrom protection: on publish, strips bylines for staff whose `_maelstrom` meta contains restricted region/country terms matching the post's taxonomy assignments.
 - Integrates with Yoast SEO to populate `wpseo_meta_author`, `wpseo_opengraph_author_facebook`, and `wpseo_enhanced_slack_data` from the post's bylines rather than the WordPress post author.
 - Adds `noindex`/`nofollow` robots directives to byline term archives for staff members with `bylineLinkEnabled` disabled.
 - Registers five Gutenberg blocks for composing author displays in the editor.
@@ -54,7 +53,6 @@ add_filter( 'prc_platform__bylines_enabled_post_types', function( $types ) {
 | `_wp_user`             | `integer` | Protected. ID of the linked WordPress user, or unset. See [Linked WordPress user](#linked-wordpress-user).      |
 | `bylineLinkEnabled`    | `boolean` | Controls whether a public byline link and archive page are exposed.                                             |
 | `socialProfiles`       | `array`   | Array of `{key, url}` social profile objects.                                                                   |
-| `_maelstrom`           | `object`  | `{enabled: bool, restricted: string[]}` — staff safety net. See [Maelstrom](#maelstrom).                        |
 
 ### On bylines-enabled post types
 
@@ -127,7 +125,6 @@ Two scripts are enqueued via `enqueue_block_editor_assets`:
 | `the_title`                                | Filter    | Prefixes "FORMER: " to staff post titles in the admin only.                                                                                           |
 | `prc_sitemap_supported_taxonomies`         | Filter    | Opts `bylines` into the platform XML sitemap.                                                                                                         |
 | `prc_platform_pub_listing_default_args`    | Filter    | Includes `staff` post type in pub-listing queries when a search term is present.                                                                      |
-| `prc_platform_on_publish`                  | Action    | Triggers Maelstrom enforcement on post publish.                                                                                                       |
 | `wp_robots`                                | Filter    | Adds `noindex`/`nofollow` to byline term archives for staff with `bylineLinkEnabled = false`.                                                         |
 | `wpseo_meta_author`                        | Filter    | Replaces Yoast author meta with the post's bylines string.                                                                                            |
 | `wpseo_opengraph_author_facebook`          | Filter    | Same as above for Open Graph author tag.                                                                                                              |
@@ -153,21 +150,6 @@ wp prc-staff link-users [--dry-run]
 ```
 
 Links current staff records that have no user to users of the primary site that have no staff record. It matches the legacy `user_id` staff meta first, then the user's first and last name, then the display name. Names compare without case and with collapsed whitespace. It prints a table of every match, ambiguous case, and miss, and writes only exact, unique matches. A user that matches two staff records is ambiguous for both. Former staff are skipped. Run it with `--dry-run` first.
-
-## Maelstrom
-
-`_maelstrom` is a staff-level safety net that automatically removes a staff member's byline from a post at publish time if the post is tagged with regions or countries the staff member has marked as restricted. This is intentionally obfuscated in the codebase to reduce exposure of the feature's purpose.
-
-Configure via the `_maelstrom` post meta on the `staff` post:
-
-```json
-{
-	"enabled": false,
-	"restricted": ["Middle East & North Africa", "China"]
-}
-```
-
-The `enabled` flag is computed at publish time based on whether the post's `regions-countries` terms overlap with `restricted`. Do not rely on the stored `enabled` value at rest.
 
 ## Linked WordPress user
 
@@ -266,7 +248,6 @@ $bylines->format( 'html' );   // same with <a> or <span> per-author, comma/and s
 | `includes/class-staff-user-matcher.php`       | Pure name matcher behind `wp prc-staff link-users`.                                                               |
 | `includes/class-staff-user-link-commands.php` | WP-CLI command `wp prc-staff link-users`.                                                                         |
 | `includes/class-seo.php`                      | Integrates with Yoast SEO for author meta and robots directives.                                                  |
-| `includes/class-maelstrom.php`                | Enforces staff safety net on publish via `prc_platform_on_publish`.                                               |
 | `includes/class-guest-author-commands.php`    | WP-CLI command for creating guest-author byline terms.                                                            |
 | `includes/bylines-inspector-sidebar-panel/`   | Editor panel for managing bylines on posts.                                                                       |
 | `includes/staff-inspector-sidebar-panel/`     | Editor panel for managing staff-specific meta on `staff` posts.                                                   |
