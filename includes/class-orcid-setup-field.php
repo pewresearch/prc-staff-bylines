@@ -49,15 +49,25 @@ class Orcid_Setup_Field {
 			return $fields;
 		}
 		$fields[] = array(
-			'id'          => self::FIELD_ID,
-			'label'       => __( 'ORCID iD', 'prc-staff-bylines' ),
-			'description' => __( 'Sign in to ORCID to confirm your iD. It appears as verified on your staff profile.', 'prc-staff-bylines' ),
-			'type'        => 'popup_connect',
-			'is_complete' => array( self::class, 'is_complete' ),
-			'save'        => array( self::class, 'save' ),
-			'value'       => array( self::class, 'value' ),
+			'id'            => self::FIELD_ID,
+			'label'         => __( 'ORCID iD', 'prc-staff-bylines' ),
+			'description'   => __( 'Sign in to ORCID to confirm your iD. It appears as verified on your staff profile.', 'prc-staff-bylines' ),
+			'type'          => 'popup_connect',
+			'is_applicable' => array( self::class, 'is_applicable' ),
+			'is_complete'   => array( self::class, 'is_complete' ),
+			'save'          => array( self::class, 'save' ),
+			'value'         => array( self::class, 'value' ),
 		);
 		return $fields;
+	}
+
+	/**
+	 * Only users linked to a staff record can authenticate an iD.
+	 *
+	 * @param WP_User $user User.
+	 */
+	public static function is_applicable( WP_User $user ): bool {
+		return null !== Staff_User_Link::staff_id_for_user( $user->ID );
 	}
 
 	/**
