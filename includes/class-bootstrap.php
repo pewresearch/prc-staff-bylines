@@ -82,6 +82,8 @@ class Bootstrap {
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-staff-user-link.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-staff-user-matcher.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-orcid-setup-field.php';
+		require_once plugin_dir_path( __DIR__ ) . '/includes/class-research-team-user.php';
+		require_once plugin_dir_path( __DIR__ ) . '/includes/class-research-team-setup-field.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-staff-field-resolver.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/bits/class-staff-bits.php';
 		require_once plugin_dir_path( __DIR__ ) . '/includes/class-byline-sync.php';
@@ -151,6 +153,8 @@ class Bootstrap {
 		new Orcid( $this->get_loader() );
 		new Staff_User_Link( $this->get_loader() );
 		new Orcid_Setup_Field( $this->get_loader() );
+		new Research_Team_User( $this->get_loader() );
+		new Research_Team_Setup_Field( $this->get_loader() );
 
 		if ( class_exists( 'Content_For_Agents\PRC_Bridge\LLMs_Txt' ) || class_exists( 'PRC\Platform\Markdown_For_Agents\LLMs_Txt' ) ) {
 			require_once plugin_dir_path( __DIR__ ) . '/includes/class-llms-txt-section.php';

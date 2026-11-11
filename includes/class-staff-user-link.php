@@ -172,6 +172,27 @@ class Staff_User_Link {
 	}
 
 	/**
+	 * Run a callback on the primary site, where staff posts and their terms live.
+	 *
+	 * @param callable $callback Callback.
+	 * @return mixed Callback result.
+	 */
+	public static function on_primary_site( callable $callback ) {
+		$site_id  = self::primary_site_id();
+		$switched = is_multisite() && get_current_blog_id() !== $site_id;
+		if ( $switched ) {
+			switch_to_blog( $site_id );
+		}
+		try {
+			return $callback();
+		} finally {
+			if ( $switched ) {
+				restore_current_blog();
+			}
+		}
+	}
+
+	/**
 	 * Linked user ID for a staff post on the current site.
 	 *
 	 * @param int $staff_id Staff post ID.

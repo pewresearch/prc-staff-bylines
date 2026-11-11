@@ -182,6 +182,12 @@ When ORCID is configured, the plugin adds an optional `orcid` step to the `prc-w
 
 The step is complete when the user has no linked staff record, when the linked iD is authenticated, or when the user chose **I don't have an ORCID iD**. That choice is stored as a setup acknowledgment, so the splash does not ask again. `includes/class-orcid-setup-field.php` owns the step.
 
+### Research team
+
+Each user can store the research team they belong to in the `prc_research_team` user meta. The value is a `research-teams` term slug. Slugs are the same on every site, while term IDs are not. The meta is exposed in REST and is editable on the user profile screen as a **Research team** dropdown under **Staff profile**. The dropdown lists the `research-teams` terms from the primary site, minus the content sections `decoded`, `pew-research-center`, and `short-reads`. Saving an unknown slug stores nothing.
+
+The plugin also adds a `research_team` step to the `prc-wp-admin-tours` welcome splash. It uses the `select_confirm` field type, and it appears only for users linked to a staff record. The step looks up the research team on the linked staff post (the primary term, else the first term) and preselects it. The user confirms it or picks another team, then saves. **Not on a research team** is a valid answer. The step is complete when the user has a team saved or answered the step. `includes/class-research-team-user.php` owns the meta and profile field. `includes/class-research-team-setup-field.php` owns the step.
+
 | Environment variable               | Description                                                           |
 | ---------------------------------- | --------------------------------------------------------------------- |
 | `PRC_PLATFORM_ORCID_CLIENT_ID`     | ORCID public API client ID. The button is disabled when empty.        |
@@ -190,7 +196,7 @@ The step is complete when the user has no linked staff record, when the linked i
 
 The **ORCID iD icon** binding field (`valueToFetch: orcid-icon`) fills the `icon` attribute of a `core/icon` block with `brands/orcid` when the staff member has an iD. It is grayscale when the iD is unauthenticated, and resolves to nothing when there is no iD. A `render_block_core/icon` filter colors the mark (glyph `#a6ce39`, background `#ffffff`, round) and sets `role="img"` and `aria-label="ORCID iD"`. The plugin enables bindings on `core/icon` `icon` through `block_bindings_supported_attributes_core/icon`, because WordPress 7.1 does not.
 
-The **ORCID iD** binding field (`valueToFetch: orcid`) renders the iD as a link. The link has the class `wp-block-prc-block-staff-context-provider__orcid` plus `is-authenticated` or `is-unauthenticated`. The `prc-staff-bylines/staff-orcid` pattern and the `taxonomy-bylines` theme template use this field.
+The **ORCID iD** binding field (`valueToFetch: orcid`) renders the full ORCID record URL (`https://orcid.org/<iD>`) as a link, and shows that URL as the link text. The link has the class `wp-block-prc-block-staff-context-provider__orcid` plus `is-authenticated` or `is-unauthenticated`. The `prc-staff-bylines/staff-orcid` pattern and the `taxonomy-bylines` theme template use this field.
 
 ## The `Staff` object
 

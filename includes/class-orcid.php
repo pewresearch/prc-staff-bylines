@@ -180,11 +180,12 @@ class Orcid {
 	 * @return string
 	 */
 	public static function render_link( string $id, bool $authenticated ): string {
+		$url = self::url( $id );
 		return sprintf(
 			'<a class="wp-block-prc-block-staff-context-provider__orcid %1$s" href="%2$s" rel="me">%3$s</a>%4$s',
 			$authenticated ? 'is-authenticated' : 'is-unauthenticated',
-			esc_url( self::url( $id ) ),
-			esc_html( $id ),
+			esc_url( $url ),
+			esc_html( $url ),
 			$authenticated ? '' : ' <span class="wp-block-prc-block-staff-context-provider__orcid-status">' . esc_html__( '(unauthenticated)', 'prc-staff-bylines' ) . '</span>'
 		);
 	}

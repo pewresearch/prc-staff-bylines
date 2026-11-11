@@ -20,7 +20,8 @@ function formatOrcidHtml(id, authenticated) {
 	const unauthenticatedLabel = authenticated
 		? ''
 		: ` <span class="wp-block-prc-block-staff-context-provider__orcid-status">${__('(unauthenticated)', 'prc-staff-bylines')}</span>`;
-	return `<a class="wp-block-prc-block-staff-context-provider__orcid ${status}" href="https://orcid.org/${id}" rel="me">${id}</a>${unauthenticatedLabel}`;
+	const url = `https://orcid.org/${id}`;
+	return `<a class="wp-block-prc-block-staff-context-provider__orcid ${status}" href="${url}" rel="me">${url}</a>${unauthenticatedLabel}`;
 }
 
 const ORCID_ICON_NAME = 'brands/orcid';

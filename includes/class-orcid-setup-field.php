@@ -81,7 +81,7 @@ class Orcid_Setup_Field {
 		if ( null === $staff_id || Setup_Fields::is_acknowledged( $user, self::FIELD_ID ) ) {
 			return true;
 		}
-		return self::on_primary_site( static fn(): bool => Orcid::is_authenticated( $staff_id ) );
+		return Staff_User_Link::on_primary_site( static fn(): bool => Orcid::is_authenticated( $staff_id ) );
 	}
 
 	/**
@@ -112,24 +112,5 @@ class Orcid_Setup_Field {
 			Setup_Fields::acknowledge( $user, self::FIELD_ID );
 		}
 		return true;
-	}
-
-	/**
-	 * Run a callback on the primary site, where staff posts live.
-	 *
-	 * @param callable $callback Callback.
-	 * @return mixed
-	 */
-	private static function on_primary_site( callable $callback ) {
-		$site_id  = Staff_User_Link::primary_site_id();
-		$switched = is_multisite() && get_current_blog_id() !== $site_id;
-		if ( $switched ) {
-			switch_to_blog( $site_id );
-		}
-		$result = $callback();
-		if ( $switched ) {
-			restore_current_blog();
-		}
-		return $result;
 	}
 }
